@@ -1,16 +1,20 @@
 import boto3
 import json
+import requests
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.base import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
-    GraphSchema,
     Node,
     Property,
+    PropertyGraphSchema,
+    RDFGraphSchema,
     Relationship,
     RelationshipPattern,
+    URIItem,
 )
+from botocore.awsrequest import AWSRequest
 from loguru import logger
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 
 class NeptuneDatabase(NeptuneGraph):
@@ -31,7 +35,8 @@ class NeptuneDatabase(NeptuneGraph):
         )
     """
 
-    schema: Optional[GraphSchema] = None
+    schema: Optional[PropertyGraphSchema] = None
+    rdf_schema: Optional[RDFGraphSchema] = None
 
     def __init__(
         self,
@@ -46,12 +51,12 @@ class NeptuneDatabase(NeptuneGraph):
                 session = boto3.Session()
             else:
                 session = boto3.Session(profile_name=credentials_profile_name)
-
+            self.session = session
             client_params = {}
             protocol = 'https' if use_https else 'http'
             client_params['endpoint_url'] = f'{protocol}://{host}:{port}'
             self.client = session.client('neptunedata', **client_params)
-
+            self.endpoint_url = client_params['endpoint_url']
         except Exception as e:
             logger.exception('Could not load credentials to authenticate with AWS client')
             raise ValueError(
@@ -61,7 +66,8 @@ class NeptuneDatabase(NeptuneGraph):
             ) from e
 
         try:
-            self._refresh_schema()
+            self.get_lpg_schema()
+            self.get_rdf_schema()
         except Exception as e:
             logger.exception('Could not get schema for Neptune database')
             raise NeptuneException(
@@ -227,8 +233,8 @@ class NeptuneDatabase(NeptuneGraph):
 
         return edges
 
-    def _refresh_schema(self) -> GraphSchema:
-        """Refreshes the Neptune graph schema information.
+    def _refresh_lpg_schema(self) -> PropertyGraphSchema:
+        """Refreshes the Neptune lpg graph schema information.
 
         This method queries the graph to build a complete schema representation
         including nodes, relationships, and relationship patterns.
@@ -249,24 +255,34 @@ class NeptuneDatabase(NeptuneGraph):
         nodes = self._get_node_properties(n_labels, types)
         rels = self._get_edge_properties(e_labels, types)
 
-        graph = GraphSchema(nodes=nodes, relationships=rels, relationship_patterns=triple_schema)
+        graph = PropertyGraphSchema(
+            nodes=nodes, relationships=rels, relationship_patterns=triple_schema
+        )
 
         self.schema = graph
         return graph
 
-    def get_schema(self) -> GraphSchema:
-        """Returns the current graph schema, refreshing it if necessary.
+    def get_lpg_schema(self) -> PropertyGraphSchema:
+        """Returns the current LPG graph schema, refreshing it if necessary.
 
         Returns:
-            GraphSchema: Complete schema information for the graph
+            PropertyGraphSchema: Complete schema information for the property graph
         """
         if self.schema is None:
-            self._refresh_schema()
+            self._refresh_lpg_schema()
         return (
             self.schema
             if self.schema
-            else GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+            else PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
         )
+
+    def propertygraph_schema(self) -> PropertyGraphSchema:
+        """Returns the property graph schema, refreshing it if necessary.
+
+        Returns:
+            PropertyGraphSchema: Complete schema information for the property graph
+        """
+        return self.get_lpg_schema()
 
     def query_opencypher(self, query: str, params: Optional[dict] = None):
         """Executes an openCypher query against the Neptune database.
@@ -288,7 +304,7 @@ class NeptuneDatabase(NeptuneGraph):
 
         return resp['result'] if 'result' in resp else resp['results']
 
-    def query_gremlin(self, query):
+    def query_gremlin(self, query: str):
         """Executes a Gremlin query against the Neptune database.
 
         Args:
@@ -297,5 +313,125 @@ class NeptuneDatabase(NeptuneGraph):
         Returns:
             Any: The query results, either as a single result or a list of results
         """
-        resp = self.client.execute_gremlin_query(gremlinQuery=query)
+        resp = self.client.execute_gremlin_query(
+            gremlinQuery=query, serializer='application/vnd.gremlin-v1.0+json'
+        )
         return resp['result'] if 'result' in resp else resp['results']
+
+    def query_sparql(self, query: str) -> dict:
+        """Executes a SPARQL query against the Neptune database.
+
+        Args:
+            query (str): The SPARQL query string to execute
+
+        Returns:
+            dict: The query results
+        """
+        return self._query_sparql(query)
+
+    def _get_local_name(self, iri: str) -> Sequence[str]:
+        """Split IRI into prefix and local."""
+        if '#' in iri:
+            tokens = iri.split('#')
+            prefix = tokens[0] + '#'
+            local = tokens[1]
+            return prefix, local
+        elif '/' in iri:
+            tokens = iri.rsplit('/', 1)
+            prefix = tokens[0] + '/'
+            local = tokens[1]
+            return prefix, local
+        else:
+            raise ValueError(f"Unexpected IRI '{iri}', contains neither '#' nor '/'.")
+
+    def get_rdf_schema(self) -> RDFGraphSchema:
+        """Returns the RDF schema for the Neptune database.
+
+        Returns:
+            RDFGraphSchema: Complete schema information for the RDF graph
+        """
+        schema_elements: RDFGraphSchema = RDFGraphSchema(
+            distinct_prefixes={}, classes=[], rels=[], dtprops=[], oprops=[]
+        )
+
+        if self.rdf_schema is not None:
+            return self.rdf_schema
+
+        # Prefixes
+        prefixes = {}
+
+        # Classes
+        classes_query = """
+        SELECT DISTINCT ?elem
+        WHERE {
+        ?elem a owl:Class .
+        }
+        """
+        classes_result = self._query_sparql(classes_query)
+        classes = []
+        for binding in classes_result['results']['bindings']:
+            iri = binding['elem']['value']
+            try:
+                prefix, local = self._get_local_name(iri)
+                prefixes[prefix] = prefix
+                classes.append(URIItem(uri=iri, local=local))
+            except ValueError:
+                pass
+
+        # Relations
+        rels_query = """
+        SELECT DISTINCT ?elem
+        WHERE {
+        ?elem a rdf:Property .
+        }
+        """
+        rels_result = self._query_sparql(rels_query)
+        rels = []
+        for binding in rels_result['results']['bindings']:
+            iri = binding['elem']['value']
+            try:
+                prefix, local = self._get_local_name(iri)
+                prefixes[prefix] = prefix
+                rels.append(URIItem(uri=iri, local=local))
+            except ValueError:
+                pass
+
+        schema_elements.distinct_prefixes = prefixes
+        schema_elements.classes = classes
+        schema_elements.rels = rels
+
+        self.rdf_schema = schema_elements
+        return schema_elements
+
+    def _query_sparql(self, query: str) -> dict:
+        """Executes a SPARQL query against the Neptune database using SigV4 authentication.
+
+        Args:
+            query (str): The SPARQL query string to execute
+
+        Returns:
+            dict: The query results
+        """
+        request = AWSRequest(
+            method='POST',
+            url=f'{self.endpoint_url}/sparql',
+            data=f'query={query}',
+        )
+        request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+        res = requests.request(
+            method=request.method,
+            url=request.url,
+            headers=dict(request.headers),
+            data=request.data,
+        )
+
+        if res.status_code != 200:
+            raise NeptuneException(
+                {
+                    'message': 'Error executing SPARQL query',
+                    'details': res.text,
+                }
+            )
+
+        return res.json()

@@ -3,9 +3,10 @@ import json
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
-    GraphSchema,
     Node,
     Property,
+    PropertyGraphSchema,
+    RDFGraphSchema,
     Relationship,
     RelationshipPattern,
 )
@@ -27,7 +28,7 @@ class NeptuneAnalytics(NeptuneGraph):
         )
     """
 
-    schema: Optional[GraphSchema] = None
+    schema: Optional[PropertyGraphSchema] = None
 
     def __init__(
         self, graph_identifier: str, credentials_profile_name: Optional[str] = None
@@ -64,7 +65,7 @@ class NeptuneAnalytics(NeptuneGraph):
                 }
             )
 
-    def _refresh_schema(self) -> GraphSchema:
+    def _refresh_schema(self) -> PropertyGraphSchema:
         """Refreshes the Neptune graph schema information.
 
         This method queries the Neptune Analytics graph to build a complete schema
@@ -82,7 +83,7 @@ class NeptuneAnalytics(NeptuneGraph):
 
         data = self.query_opencypher(pg_schema_query)
         raw_schema = data[0]['schema']
-        graph = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+        graph = PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
         # Process relationship patterns
         for i in raw_schema['labelTriples']:
@@ -108,7 +109,7 @@ class NeptuneAnalytics(NeptuneGraph):
         self.schema = graph
         return graph
 
-    def get_schema(self) -> GraphSchema:
+    def get_schema(self) -> PropertyGraphSchema:
         """Returns the current graph schema, refreshing it if necessary.
 
         Returns:
@@ -119,8 +120,35 @@ class NeptuneAnalytics(NeptuneGraph):
         return (
             self.schema
             if self.schema
-            else GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+            else PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
         )
+
+    def propertygraph_schema(self) -> PropertyGraphSchema:
+        """Returns the property graph schema, refreshing it if necessary.
+
+        Returns:
+            PropertyGraphSchema: Complete schema information for the property graph
+        """
+        return self.get_schema()
+
+    def get_rdf_schema(self) -> RDFGraphSchema:
+        """Returns the RDF schema (not supported for Neptune Analytics).
+
+        Raises:
+            NotImplementedError: RDF schema is not supported for Neptune Analytics
+        """
+        raise NotImplementedError('RDF schema not supported for Neptune Analytics graphs.')
+
+    def query_sparql(self, query: str) -> dict:
+        """Executes a SPARQL query (not supported for Neptune Analytics).
+
+        Args:
+            query: The SPARQL query string
+
+        Raises:
+            NotImplementedError: SPARQL queries are not supported for Neptune Analytics
+        """
+        raise NotImplementedError('RDF queries are not supported for Neptune Analytics graphs.')
 
     def query_opencypher(self, query: str, params: Optional[dict] = None):
         """Executes an openCypher query against the Neptune Analytics graph.

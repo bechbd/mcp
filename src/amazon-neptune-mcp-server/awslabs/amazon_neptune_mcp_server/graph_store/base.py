@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from awslabs.amazon_neptune_mcp_server.models import GraphSchema
+from awslabs.amazon_neptune_mcp_server.models import PropertyGraphSchema, RDFGraphSchema
 from typing import Optional
 
 
@@ -12,11 +12,20 @@ class NeptuneGraph(ABC):
     """
 
     @abstractmethod
-    def get_schema(self) -> GraphSchema:
+    def get_lpg_schema(self) -> PropertyGraphSchema:
         """Retrieves the schema information for the graph.
 
         Returns:
-            GraphSchema: Complete schema information for the graph
+            PropertyGraphSchema: Complete schema information for the graph
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_rdf_schema(self) -> RDFGraphSchema:
+        """Retrieves the schema information for the RDF graph.
+
+        Returns:
+            RDFGraphSchema: Complete schema information for the graph
         """
         raise NotImplementedError()
 
@@ -39,6 +48,18 @@ class NeptuneGraph(ABC):
 
         Args:
             query (str): The Gremlin query string to execute
+
+        Returns:
+            dict: The query results
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def query_sparql(self, query: str) -> dict:
+        """Executes a SPARQL query against the graph.
+
+        Args:
+            query (str): The SPARQL query string to execute
 
         Returns:
             dict: The query results

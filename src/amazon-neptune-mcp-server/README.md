@@ -1,12 +1,12 @@
 # AWS Labs Amazon Neptune MCP Server
 
-An Amazon Neptune MCP server that allows for fetching status, schema, and querying using openCypher and Gremlin for Neptune Database and openCypher for Neptune Analytics.
+An Amazon Neptune MCP server that allows for fetching status, schema, and querying using openCypher, SPARQL, and Gremlin for Neptune Database and openCypher for Neptune Analytics.
 
 ## Features
 
 The Amazon Neptune MCP Server provides the following capabilities:
 
-1. **Run Queries**: Execute openCypher and/or Gremlin queries against the configured database
+1. **Run Queries**: Execute openCypher, SPARQL, and/or Gremlin queries against the configured database
 2. **Schema**: Get the schema in the configured graph as a text string
 3. **Status**: Find if the graph is "Available" or "Unavailable" to your server.  This is useful in helping to ensure that the graph is connected.
 

@@ -86,7 +86,7 @@ class RelationshipPattern(BaseModel):
     relation: str
 
 
-class GraphSchema(BaseModel):
+class PropertyGraphSchema(BaseModel):
     """Represents the complete schema definition for the graph database.
 
     The graph schema defines all possible node types, relationship types,
@@ -101,3 +101,33 @@ class GraphSchema(BaseModel):
     nodes: List[Node]
     relationships: List[Relationship]
     relationship_patterns: List[RelationshipPattern]
+
+
+class URIItem(BaseModel):
+    """Represents an item with a URI and local name.
+
+    Attributes:
+        uri (str): The full URI of the item
+        local (str): The local name/identifier of the item
+    """
+
+    uri: str
+    local: str
+
+
+class RDFGraphSchema(BaseModel):
+    """Represents a complete RDF schema definition.
+
+    Attributes:
+        distinct_prefixes (Dict[str, str]): Mapping of URI prefixes to their aliases
+        classes (List[URIItem]): List of class definitions with URIs and local names
+        rels (List[URIItem]): List of relationship definitions with URIs and local names
+        dtprops (List): List of datatype properties (empty in the provided schema)
+        oprops (List): List of object properties (empty in the provided schema)
+    """
+
+    distinct_prefixes: dict[str, str]
+    classes: List[URIItem]
+    rels: List[URIItem]
+    dtprops: List = []
+    oprops: List = []
