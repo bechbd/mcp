@@ -412,16 +412,18 @@ class NeptuneDatabase(NeptuneGraph):
         Returns:
             dict: The query results
         """
+        method = 'POST'
+        url = f'{self.endpoint_url}/sparql'
         request = AWSRequest(
-            method='POST',
-            url=f'{self.endpoint_url}/sparql',
+            method=method,
+            url=url,
             data=f'query={query}',
         )
         request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         res = requests.request(
-            method=request.method,
-            url=request.url,
+            method=method,
+            url=url,
             headers=dict(request.headers),
             data=request.data,
         )
