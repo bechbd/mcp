@@ -109,7 +109,7 @@ class NeptuneAnalytics(NeptuneGraph):
         self.schema = graph
         return graph
 
-    def get_schema(self) -> PropertyGraphSchema:
+    def get_lpg_schema(self) -> PropertyGraphSchema:
         """Returns the current graph schema, refreshing it if necessary.
 
         Returns:
@@ -129,7 +129,7 @@ class NeptuneAnalytics(NeptuneGraph):
         Returns:
             PropertyGraphSchema: Complete schema information for the property graph
         """
-        return self.get_schema()
+        return self.get_lpg_schema()
 
     def get_rdf_schema(self) -> RDFGraphSchema:
         """Returns the RDF schema (not supported for Neptune Analytics).
