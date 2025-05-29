@@ -4,9 +4,9 @@ import requests
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.base import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
+    GraphSchema,
     Node,
     Property,
-    PropertyGraphSchema,
     RDFGraphSchema,
     Relationship,
     RelationshipPattern,
@@ -35,7 +35,7 @@ class NeptuneDatabase(NeptuneGraph):
         )
     """
 
-    schema: Optional[PropertyGraphSchema] = None
+    schema: Optional[GraphSchema] = None
     rdf_schema: Optional[RDFGraphSchema] = None
 
     def __init__(
@@ -233,7 +233,7 @@ class NeptuneDatabase(NeptuneGraph):
 
         return edges
 
-    def _refresh_lpg_schema(self) -> PropertyGraphSchema:
+    def _refresh_lpg_schema(self) -> GraphSchema:
         """Refreshes the Neptune lpg graph schema information.
 
         This method queries the graph to build a complete schema representation
@@ -255,14 +255,12 @@ class NeptuneDatabase(NeptuneGraph):
         nodes = self._get_node_properties(n_labels, types)
         rels = self._get_edge_properties(e_labels, types)
 
-        graph = PropertyGraphSchema(
-            nodes=nodes, relationships=rels, relationship_patterns=triple_schema
-        )
+        graph = GraphSchema(nodes=nodes, relationships=rels, relationship_patterns=triple_schema)
 
         self.schema = graph
         return graph
 
-    def get_lpg_schema(self) -> PropertyGraphSchema:
+    def get_lpg_schema(self) -> GraphSchema:
         """Returns the current LPG graph schema, refreshing it if necessary.
 
         Returns:
@@ -273,10 +271,10 @@ class NeptuneDatabase(NeptuneGraph):
         return (
             self.schema
             if self.schema
-            else PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+            else GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
         )
 
-    def propertygraph_schema(self) -> PropertyGraphSchema:
+    def propertygraph_schema(self) -> GraphSchema:
         """Returns the property graph schema, refreshing it if necessary.
 
         Returns:

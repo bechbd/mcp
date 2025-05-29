@@ -11,9 +11,9 @@
 """Tests for the data models."""
 
 from awslabs.amazon_neptune_mcp_server.models import (
+    GraphSchema,
     Node,
     Property,
-    PropertyGraphSchema,
     Relationship,
     RelationshipPattern,
 )
@@ -193,7 +193,7 @@ class TestModels:
         )
 
         # Create property graph schema
-        schema = PropertyGraphSchema(
+        schema = GraphSchema(
             nodes=[person_node, city_node],
             relationships=[knows_rel, lives_in_rel],
             relationship_patterns=[person_knows_person, person_lives_in_city],
@@ -218,7 +218,7 @@ class TestModels:
         2. The attributes are correctly initialized as empty lists
         """
         # Create empty property graph schema
-        schema = PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+        schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
         # Verify attributes
         assert len(schema.nodes) == 0

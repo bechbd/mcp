@@ -15,7 +15,7 @@ import pytest
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.analytics import NeptuneAnalytics
 from awslabs.amazon_neptune_mcp_server.models import (
-    PropertyGraphSchema,
+    GraphSchema,
 )
 from unittest.mock import MagicMock, Mock, patch
 
@@ -43,7 +43,7 @@ class TestNeptuneAnalytics:
         with patch.object(
             NeptuneAnalytics,
             '_refresh_schema',
-            return_value=PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
         ):
             # Act
             analytics = NeptuneAnalytics(graph_identifier='test-graph-id')
@@ -72,7 +72,7 @@ class TestNeptuneAnalytics:
         with patch.object(
             NeptuneAnalytics,
             '_refresh_schema',
-            return_value=PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
         ):
             # Act
             NeptuneAnalytics(

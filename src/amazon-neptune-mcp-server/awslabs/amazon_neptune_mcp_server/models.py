@@ -86,7 +86,7 @@ class RelationshipPattern(BaseModel):
     relation: str
 
 
-class PropertyGraphSchema(BaseModel):
+class GraphSchema(BaseModel):
     """Represents the complete schema definition for the graph database.
 
     The graph schema defines all possible node types, relationship types,

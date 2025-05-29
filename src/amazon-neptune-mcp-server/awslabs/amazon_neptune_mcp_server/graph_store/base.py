@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from awslabs.amazon_neptune_mcp_server.models import PropertyGraphSchema, RDFGraphSchema
+from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
 from typing import Optional
 
 
@@ -12,7 +12,7 @@ class NeptuneGraph(ABC):
     """
 
     @abstractmethod
-    def get_lpg_schema(self) -> PropertyGraphSchema:
+    def get_lpg_schema(self) -> GraphSchema:
         """Retrieves the schema information for the graph.
 
         Returns:

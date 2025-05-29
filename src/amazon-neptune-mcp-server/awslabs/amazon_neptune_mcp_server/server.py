@@ -14,7 +14,7 @@
 import argparse
 import os
 import sys
-from awslabs.amazon_neptune_mcp_server.models import PropertyGraphSchema, RDFGraphSchema
+from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
 from awslabs.amazon_neptune_mcp_server.neptune import NeptuneServer
 from loguru import logger
 from mcp.server.fastmcp import FastMCP
@@ -75,12 +75,12 @@ def get_status_resource() -> str:
 
 
 @mcp.resource(
-    uri='amazon-neptune://schema/propertygraph',
+    uri='amazon-neptune://schema',
     name='PropertyGraphSchema',
     mime_type='application/text',
 )
-def get_propertygraph_schema_resource() -> PropertyGraphSchema:
-    """Get the schema for the graph including the vertex and edge labels as well as the
+def get_propertygraph_schema_resource() -> GraphSchema:
+    """Get the schema for the labeled property graph including the vertex and edge labels as well as the
     (vertex)-[edge]->(vertex) combinations.
     """
     return get_graph().propertygraph_schema()
@@ -98,8 +98,8 @@ def get_status() -> str:
     return get_graph().status()
 
 
-@mcp.tool(name='get_propertygraph_schema')
-def get_property_graph_schema() -> PropertyGraphSchema:
+@mcp.tool(name='get_graph_schema')
+def get_property_graph_schema() -> GraphSchema:
     """Get the schema for the property graph including the vertex and edge labels as well as the
     (vertex)-[edge]->(vertex) combinations.
     """

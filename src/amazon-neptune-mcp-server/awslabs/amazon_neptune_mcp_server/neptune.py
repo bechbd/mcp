@@ -25,7 +25,7 @@ from awslabs.amazon_neptune_mcp_server.graph_store import (
     NeptuneDatabase,
     NeptuneGraph,
 )
-from awslabs.amazon_neptune_mcp_server.models import PropertyGraphSchema, RDFGraphSchema
+from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
 from loguru import logger
 from typing import Optional
 
@@ -91,7 +91,7 @@ class NeptuneServer:
             logger.exception('Could not get status for Neptune instance')
             return 'Unavailable'
 
-    def propertygraph_schema(self) -> PropertyGraphSchema:
+    def propertygraph_schema(self) -> GraphSchema:
         """Retrieve the schema information from the Neptune instance.
 
         Returns:

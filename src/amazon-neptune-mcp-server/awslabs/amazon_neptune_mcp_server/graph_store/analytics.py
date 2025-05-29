@@ -3,9 +3,9 @@ import json
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
+    GraphSchema,
     Node,
     Property,
-    PropertyGraphSchema,
     RDFGraphSchema,
     Relationship,
     RelationshipPattern,
@@ -28,7 +28,7 @@ class NeptuneAnalytics(NeptuneGraph):
         )
     """
 
-    schema: Optional[PropertyGraphSchema] = None
+    schema: Optional[GraphSchema] = None
 
     def __init__(
         self, graph_identifier: str, credentials_profile_name: Optional[str] = None
@@ -65,7 +65,7 @@ class NeptuneAnalytics(NeptuneGraph):
                 }
             )
 
-    def _refresh_schema(self) -> PropertyGraphSchema:
+    def _refresh_schema(self) -> GraphSchema:
         """Refreshes the Neptune graph schema information.
 
         This method queries the Neptune Analytics graph to build a complete schema
@@ -83,7 +83,7 @@ class NeptuneAnalytics(NeptuneGraph):
 
         data = self.query_opencypher(pg_schema_query)
         raw_schema = data[0]['schema']
-        graph = PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+        graph = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
         # Process relationship patterns
         for i in raw_schema['labelTriples']:
@@ -109,7 +109,7 @@ class NeptuneAnalytics(NeptuneGraph):
         self.schema = graph
         return graph
 
-    def get_lpg_schema(self) -> PropertyGraphSchema:
+    def get_lpg_schema(self) -> GraphSchema:
         """Returns the current graph schema, refreshing it if necessary.
 
         Returns:
@@ -120,10 +120,10 @@ class NeptuneAnalytics(NeptuneGraph):
         return (
             self.schema
             if self.schema
-            else PropertyGraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+            else GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
         )
 
-    def propertygraph_schema(self) -> PropertyGraphSchema:
+    def propertygraph_schema(self) -> GraphSchema:
         """Returns the property graph schema, refreshing it if necessary.
 
         Returns:
