@@ -13,13 +13,16 @@
 import pytest
 from awslabs.amazon_neptune_mcp_server.server import (
     get_graph,
-    get_schema,
-    get_schema_resource,
+    get_property_graph_schema,
+    get_propertygraph_schema_resource,
+    get_rdf_schema,
+    get_rdf_schema_resource,
     get_status,
     get_status_resource,
     main,
     run_gremlin_query,
     run_opencypher_query,
+    run_sparql_query,
 )
 from unittest.mock import MagicMock, patch
 
@@ -31,10 +34,11 @@ class TestServerTools:
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_status(self, mock_get_graph):
         """Test that get_status correctly returns the status from the graph.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The status method is called on the graph instance
-        3. The result from the graph's status method is returned unchanged.
+        3. The result from the graph's status method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
@@ -49,33 +53,57 @@ class TestServerTools:
         mock_graph.status.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
-    async def test_get_schema(self, mock_get_graph):
-        """Test that get_schema correctly returns the schema from the graph.
+    async def test_get_property_graph_schema(self, mock_get_graph):
+        """Test that get_property_graph_schema correctly returns the schema from the graph.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
-        2. The schema method is called on the graph instance
-        3. The result from the graph's schema method is returned unchanged.
+        2. The propertygraph_schema method is called on the graph instance
+        3. The result from the graph's propertygraph_schema method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
         mock_schema = MagicMock()
-        mock_graph.schema.return_value = mock_schema
+        mock_graph.propertygraph_schema.return_value = mock_schema
         mock_get_graph.return_value = mock_graph
 
         # Act
-        result = get_schema()
+        result = get_property_graph_schema()
 
         # Assert
         assert result == mock_schema
-        mock_graph.schema.assert_called_once()
+        mock_graph.propertygraph_schema.assert_called_once()
+
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_get_rdf_schema(self, mock_get_graph):
+        """Test that get_rdf_schema correctly returns the schema from the graph.
+
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The rdf_schema method is called on the graph instance
+        3. The result from the graph's rdf_schema method is returned unchanged
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_schema = MagicMock()
+        mock_graph.rdf_schema.return_value = mock_schema
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = get_rdf_schema()
+
+        # Assert
+        assert result == mock_schema
+        mock_graph.rdf_schema.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_run_opencypher_query(self, mock_get_graph):
         """Test that run_opencypher_query correctly executes a query without parameters.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The query_opencypher method is called with the correct query and None parameters
-        3. The result from the graph's query_opencypher method is returned unchanged.
+        3. The result from the graph's query_opencypher method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
@@ -93,10 +121,11 @@ class TestServerTools:
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_run_opencypher_query_with_parameters(self, mock_get_graph):
         """Test that run_opencypher_query correctly executes a query with parameters.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The query_opencypher method is called with the correct query and parameters
-        3. The result from the graph's query_opencypher method is returned unchanged.
+        3. The result from the graph's query_opencypher method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
@@ -117,10 +146,11 @@ class TestServerTools:
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_run_gremlin_query(self, mock_get_graph):
         """Test that run_gremlin_query correctly executes a Gremlin query.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The query_gremlin method is called with the correct query
-        3. The result from the graph's query_gremlin method is returned unchanged.
+        3. The result from the graph's query_gremlin method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
@@ -136,12 +166,35 @@ class TestServerTools:
         mock_graph.query_gremlin.assert_called_once_with('g.V().limit(1)')
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_run_sparql_query(self, mock_get_graph):
+        """Test that run_sparql_query correctly executes a SPARQL query.
+
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The query_sparql method is called with the correct query
+        3. The result from the graph's query_sparql method is returned unchanged
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_result = {'results': [{'s': {'value': 'http://example.org/subject'}}]}
+        mock_graph.query_sparql.return_value = mock_result
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = run_sparql_query('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
+
+        # Assert
+        assert result == mock_result
+        mock_graph.query_sparql.assert_called_once_with('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
+
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_status_resource(self, mock_get_graph):
         """Test that get_status_resource correctly returns the status from the graph.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The status method is called on the graph instance
-        3. The result from the graph's status method is returned unchanged.
+        3. The result from the graph's status method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
@@ -156,25 +209,48 @@ class TestServerTools:
         mock_graph.status.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
-    async def test_get_schema_resource(self, mock_get_graph):
-        """Test that get_schema_resource correctly returns the schema from the graph.
+    async def test_get_propertygraph_schema_resource(self, mock_get_graph):
+        """Test that get_propertygraph_schema_resource correctly returns the schema from the graph.
+
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
-        2. The schema method is called on the graph instance
-        3. The result from the graph's schema method is returned unchanged.
+        2. The propertygraph_schema method is called on the graph instance
+        3. The result from the graph's propertygraph_schema method is returned unchanged
         """
         # Arrange
         mock_graph = MagicMock()
         mock_schema = MagicMock()
-        mock_graph.schema.return_value = mock_schema
+        mock_graph.propertygraph_schema.return_value = mock_schema
         mock_get_graph.return_value = mock_graph
 
         # Act
-        result = get_schema_resource()
+        result = get_propertygraph_schema_resource()
 
         # Assert
         assert result == mock_schema
-        mock_graph.schema.assert_called_once()
+        mock_graph.propertygraph_schema.assert_called_once()
+
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_get_rdf_schema_resource(self, mock_get_graph):
+        """Test that get_rdf_schema_resource correctly returns the schema from the graph.
+
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The rdf_schema method is called on the graph instance
+        3. The result from the graph's rdf_schema method is returned unchanged
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_schema = MagicMock()
+        mock_graph.rdf_schema.return_value = mock_schema
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = get_rdf_schema_resource()
+
+        # Assert
+        assert result == mock_schema
+        mock_graph.rdf_schema.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -185,10 +261,11 @@ class TestGraphInitialization:
     @patch('awslabs.amazon_neptune_mcp_server.server.NeptuneServer')
     async def test_get_graph_initialization(self, mock_neptune_server, mock_environ_get):
         """Test that get_graph correctly initializes a NeptuneServer instance.
+
         This test verifies that:
         1. Environment variables are correctly read
         2. NeptuneServer is initialized with the correct parameters
-        3. The same instance is returned on subsequent calls (singleton pattern).
+        3. The same instance is returned on subsequent calls (singleton pattern)
         """
         # Arrange
         mock_environ_get.side_effect = lambda key, default=None: {
@@ -214,9 +291,10 @@ class TestGraphInitialization:
     @patch('os.environ.get')
     async def test_get_graph_missing_endpoint(self, mock_environ_get):
         """Test that get_graph raises an error when the NEPTUNE_ENDPOINT environment variable is missing.
+
         This test verifies that:
         1. When NEPTUNE_ENDPOINT is None, a ValueError is raised
-        2. The error message correctly indicates the missing environment variable.
+        2. The error message correctly indicates the missing environment variable
         """
         # Arrange
         mock_environ_get.side_effect = lambda key, default=None: {
@@ -237,9 +315,10 @@ class TestGraphInitialization:
     @patch('awslabs.amazon_neptune_mcp_server.server.NeptuneServer')
     async def test_get_graph_with_https_false(self, mock_neptune_server, mock_environ_get):
         """Test that get_graph correctly handles HTTPS settings from environment variables.
+
         This test verifies that:
         1. When NEPTUNE_USE_HTTPS is set to "false", use_https is set to False
-        2. NeptuneServer is initialized with the correct parameters.
+        2. NeptuneServer is initialized with the correct parameters
         """
         # Arrange
         mock_environ_get.side_effect = lambda key, default=None: {
@@ -268,8 +347,14 @@ class TestMainFunction:
     """Test class for the main function that runs the MCP server."""
 
     @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
-    async def test_main_default(self, mock_mcp):
-        """Test that main correctly runs the server with default settings."""
+    @patch('argparse.ArgumentParser.parse_args')
+    async def test_main_default(self, mock_parse_args, mock_mcp):
+        """Test that main correctly runs the server with default settings.
+
+        This test verifies that:
+        1. When SSE is not enabled, mcp.run() is called without transport parameter
+        2. The port setting is not modified.
+        """
         # Arrange
 
         # Act
@@ -277,3 +362,37 @@ class TestMainFunction:
 
         # Assert
         assert mock_mcp.run.call_count == 1
+
+    @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
+    @patch('argparse.ArgumentParser.parse_args')
+    async def test_main_with_sse(self, mock_parse_args, mock_mcp):
+        """Test that main correctly runs the server with SSE transport."""
+        # Arrange
+        mock_args = MagicMock()
+        mock_args.sse = True
+        mock_args.port = 9999
+        mock_parse_args.return_value = mock_args
+
+        # Act
+        main()
+
+        # Assert
+        mock_mcp.run.assert_called_once_with(transport='sse')
+        assert mock_mcp.settings.port == 9999
+
+    @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
+    @patch('argparse.ArgumentParser.parse_args')
+    async def test_main_with_custom_port(self, mock_parse_args, mock_mcp):
+        """Test that main correctly runs the server with a custom port."""
+        # Arrange
+        mock_args = MagicMock()
+        mock_args.sse = True
+        mock_args.port = 7777
+        mock_parse_args.return_value = mock_args
+
+        # Act
+        main()
+
+        # Assert
+        mock_mcp.run.assert_called_once_with(transport='sse')
+        assert mock_mcp.settings.port == 7777

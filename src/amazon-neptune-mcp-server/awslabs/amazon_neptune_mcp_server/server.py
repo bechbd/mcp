@@ -13,7 +13,7 @@
 
 import os
 import sys
-from awslabs.amazon_neptune_mcp_server.models import GraphSchema
+from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
 from awslabs.amazon_neptune_mcp_server.neptune import NeptuneServer
 from loguru import logger
 from mcp.server.fastmcp import FastMCP
@@ -73,12 +73,22 @@ def get_status_resource() -> str:
     return get_graph().status()
 
 
-@mcp.resource(uri='amazon-neptune://schema', name='GraphSchema', mime_type='application/text')
-def get_schema_resource() -> GraphSchema:
-    """Get the schema for the graph including the vertex and edge labels as well as the
+@mcp.resource(
+    uri='amazon-neptune://schema',
+    name='PropertyGraphSchema',
+    mime_type='application/text',
+)
+def get_propertygraph_schema_resource() -> GraphSchema:
+    """Get the schema for the labeled property graph including the vertex and edge labels as well as the
     (vertex)-[edge]->(vertex) combinations.
     """
-    return get_graph().schema()
+    return get_graph().propertygraph_schema()
+
+
+@mcp.resource(uri='amazon-neptune://schema', name='GraphSchema', mime_type='application/text')
+def get_rdf_schema_resource() -> RDFGraphSchema:
+    """Get the schema for the graph including the classes , relations, and data type combinations."""
+    return get_graph().rdf_schema()
 
 
 @mcp.tool(name='get_graph_status')
@@ -88,11 +98,17 @@ def get_status() -> str:
 
 
 @mcp.tool(name='get_graph_schema')
-def get_schema() -> GraphSchema:
-    """Get the schema for the graph including the vertex and edge labels as well as the
+def get_property_graph_schema() -> GraphSchema:
+    """Get the schema for the property graph including the vertex and edge labels as well as the
     (vertex)-[edge]->(vertex) combinations.
     """
-    return get_graph().schema()
+    return get_graph().propertygraph_schema()
+
+
+@mcp.tool(name='get_rdf_schema')
+def get_rdf_schema() -> RDFGraphSchema:
+    """Get the schema for the graph including the classes , relations, and data type combinations."""
+    return get_graph().rdf_schema()
 
 
 @mcp.tool(name='run_opencypher_query')
@@ -105,6 +121,12 @@ def run_opencypher_query(query: str, parameters: Optional[dict] = None) -> dict:
 def run_gremlin_query(query: str) -> dict:
     """Executes the provided Tinkerpop Gremlin against the graph."""
     return get_graph().query_gremlin(query)
+
+
+@mcp.tool(name='run_sparql_query')
+def run_sparql_query(query: str) -> dict:
+    """Executes the provided SPARQL against the graph."""
+    return get_graph().query_sparql(query)
 
 
 def main():

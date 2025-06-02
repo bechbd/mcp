@@ -14,7 +14,6 @@ import json
 import pytest
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.database import NeptuneDatabase
-from awslabs.amazon_neptune_mcp_server.models import GraphSchema
 from unittest.mock import MagicMock, patch
 
 
@@ -25,10 +24,11 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_init_success(self, mock_session):
         """Test successful initialization of NeptuneDatabase.
+
         This test verifies that:
         1. The boto3 Session is created correctly
         2. The client is created with the correct parameters
-        3. The schema is refreshed during initialization.
+        3. Both LPG and RDF schemas are retrieved during initialization
         """
         # Arrange
         mock_session_instance = MagicMock()
@@ -36,11 +36,10 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
         ):
             # Act
             db = NeptuneDatabase(host='test-endpoint', port=8182, use_https=True)
@@ -51,10 +50,12 @@ class TestNeptuneDatabase:
                 'neptunedata', endpoint_url='https://test-endpoint:8182'
             )
             assert db.client == mock_client
+            assert db.endpoint_url == 'https://test-endpoint:8182'
 
     @patch('boto3.Session')
     async def test_init_with_credentials_profile(self, mock_session):
         """Test initialization with a credentials profile.
+
         This test verifies that:
         1. The boto3 Session is created with the specified profile name
         2. The client is created with the correct parameters.
@@ -65,14 +66,13 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
         ):
             # Act
-            NeptuneDatabase(
+            db = NeptuneDatabase(
                 host='test-endpoint',
                 port=8182,
                 use_https=True,
@@ -84,10 +84,12 @@ class TestNeptuneDatabase:
             mock_session_instance.client.assert_called_once_with(
                 'neptunedata', endpoint_url='https://test-endpoint:8182'
             )
+            assert db.session == mock_session_instance
 
     @patch('boto3.Session')
     async def test_init_with_http(self, mock_session):
         """Test initialization with HTTP instead of HTTPS.
+
         This test verifies that:
         1. The client is created with an HTTP endpoint URL when use_https is False.
         """
@@ -97,23 +99,24 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
         ):
             # Act
-            NeptuneDatabase(host='test-endpoint', port=8182, use_https=False)
+            db = NeptuneDatabase(host='test-endpoint', port=8182, use_https=False)
 
             # Assert
             mock_session_instance.client.assert_called_once_with(
                 'neptunedata', endpoint_url='http://test-endpoint:8182'
             )
+            assert db.endpoint_url == 'http://test-endpoint:8182'
 
     @patch('boto3.Session')
     async def test_init_session_error(self, mock_session):
         """Test handling of session creation errors.
+
         This test verifies that:
         1. Errors during session creation are properly caught and re-raised
         2. The error message is appropriate.
@@ -133,7 +136,7 @@ class TestNeptuneDatabase:
 
         This test verifies that:
         1. Errors during schema refresh are properly caught and re-raised as NeptuneException
-        2. The error message is appropriate
+        2. The error message is appropriate.
         """
         # Arrange
         mock_session_instance = MagicMock()
@@ -141,9 +144,9 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to raise an exception
+        # Mock get_lpg_schema to raise an exception
         with patch.object(
-            NeptuneDatabase, '_refresh_schema', side_effect=Exception('Schema refresh error')
+            NeptuneDatabase, 'get_lpg_schema', side_effect=Exception('Schema refresh error')
         ):
             # Act & Assert
             with pytest.raises(NeptuneException) as exc_info:
@@ -155,6 +158,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_summary_success(self, mock_session):
         """Test successful retrieval of graph summary.
+
         This test verifies that:
         1. The get_propertygraph_summary API is called
         2. The summary data is correctly extracted from the response.
@@ -171,8 +175,11 @@ class TestNeptuneDatabase:
             'payload': {'graphSummary': mock_summary}
         }
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -186,6 +193,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_summary_api_error(self, mock_session):
         """Test handling of API errors in get_summary.
+
         This test verifies that:
         1. API errors are properly caught and re-raised as NeptuneException
         2. The error message indicates the Summary API is not available.
@@ -199,8 +207,11 @@ class TestNeptuneDatabase:
         # Mock the API to raise an exception
         mock_client.get_propertygraph_summary.side_effect = Exception('API error')
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -215,6 +226,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_summary_invalid_response(self, mock_session):
         """Test handling of invalid responses in get_summary.
+
         This test verifies that:
         1. Invalid responses are properly caught and re-raised as NeptuneException
         2. The error message indicates the response was invalid.
@@ -236,8 +248,11 @@ class TestNeptuneDatabase:
 
         mock_client.get_propertygraph_summary.return_value = MockResponse()
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -251,6 +266,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_labels(self, mock_session):
         """Test retrieval of node and edge labels.
+
         This test verifies that:
         1. The _get_summary method is called
         2. Node and edge labels are correctly extracted from the summary.
@@ -261,8 +277,11 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -282,6 +301,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_opencypher_without_params(self, mock_session):
         """Test execution of openCypher queries without parameters.
+
         This test verifies that:
         1. The execute_open_cypher_query API is called with the correct query
         2. The result is correctly extracted from the response.
@@ -296,8 +316,11 @@ class TestNeptuneDatabase:
         mock_result = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -313,6 +336,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_opencypher_with_params(self, mock_session):
         """Test execution of openCypher queries with parameters.
+
         This test verifies that:
         1. The execute_open_cypher_query API is called with the correct query and parameters
         2. The parameters are properly JSON-encoded
@@ -328,8 +352,11 @@ class TestNeptuneDatabase:
         mock_result = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -347,6 +374,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_opencypher_results_format(self, mock_session):
         """Test handling of different result formats in openCypher queries.
+
         This test verifies that:
         1. The method correctly handles responses with 'results' instead of 'result'.
         """
@@ -360,8 +388,11 @@ class TestNeptuneDatabase:
         mock_results = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'results': mock_results}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -374,6 +405,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_gremlin(self, mock_session):
         """Test execution of Gremlin queries.
+
         This test verifies that:
         1. The execute_gremlin_query API is called with the correct query
         2. The serializer parameter is correctly set
@@ -389,8 +421,11 @@ class TestNeptuneDatabase:
         mock_result = [{'id': '1'}]
         mock_client.execute_gremlin_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -404,6 +439,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_gremlin_results_format(self, mock_session):
         """Test handling of different result formats in Gremlin queries.
+
         This test verifies that:
         1. The method correctly handles responses with 'results' instead of 'result'.
         """
@@ -417,8 +453,11 @@ class TestNeptuneDatabase:
         mock_results = [{'id': '1'}]
         mock_client.execute_gremlin_query.return_value = {'results': mock_results}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock get_lpg_schema and get_rdf_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, 'get_lpg_schema'),
+            patch.object(NeptuneDatabase, 'get_rdf_schema'),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -427,66 +466,3 @@ class TestNeptuneDatabase:
 
             # Assert
             assert result == mock_results
-
-    @patch('boto3.Session')
-    async def test_get_schema_cached(self, mock_session):
-        """Test that get_schema returns cached schema when available.
-        This test verifies that:
-        1. When schema is already cached, _refresh_schema is not called
-        2. The cached schema is returned.
-        """
-        # Arrange
-        mock_session_instance = MagicMock()
-        mock_client = MagicMock()
-        mock_session_instance.client.return_value = mock_client
-        mock_session.return_value = mock_session_instance
-
-        # Create a mock schema
-        mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
-
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema', return_value=mock_schema):
-            # Create the database instance
-            db = NeptuneDatabase(host='test-endpoint')
-
-            # Act
-            result = db.get_schema()
-
-            # Assert - just verify the result is the mock schema
-            assert result == mock_schema
-            assert result == mock_schema
-
-    @patch('boto3.Session')
-    async def test_get_schema_refresh(self, mock_session):
-        """Test that get_schema refreshes schema when not cached.
-        This test verifies that:
-        1. When schema is not cached, _refresh_schema is called
-        2. The refreshed schema is returned.
-        """
-        # Arrange
-        mock_session_instance = MagicMock()
-        mock_client = MagicMock()
-        mock_session_instance.client.return_value = mock_client
-        mock_session.return_value = mock_session_instance
-
-        # Create a mock schema
-        mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
-
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema', return_value=mock_schema):
-            # Create the database instance
-            db = NeptuneDatabase(host='test-endpoint')
-
-            # Set schema to None to force refresh
-            db.schema = None
-
-            # Reset the mock to verify it's called again
-            NeptuneDatabase._refresh_schema.reset_mock()
-            NeptuneDatabase._refresh_schema.return_value = mock_schema
-
-            # Act
-            result = db.get_schema()
-
-            # Assert
-            NeptuneDatabase._refresh_schema.assert_called_once()
-            assert result == mock_schema

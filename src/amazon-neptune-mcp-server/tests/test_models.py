@@ -153,11 +153,11 @@ class TestModels:
         assert pattern_dict['right_node'] == 'Person'
         assert pattern_dict['relation'] == 'KNOWS'
 
-    def test_graph_schema_model(self):
-        """Test the GraphSchema model creation and serialization.
+    def test_property_graph_schema_model(self):
+        """Test the PropertyGraphSchema model creation and serialization.
 
         This test verifies that:
-        1. A GraphSchema can be created with nodes, relationships, and relationship_patterns
+        1. A PropertyGraphSchema can be created with nodes, relationships, and relationship_patterns
         2. The attributes are correctly accessible
         3. The model serializes correctly to a dictionary
         """
@@ -192,7 +192,7 @@ class TestModels:
             left_node='Person', right_node='City', relation='LIVES_IN'
         )
 
-        # Create graph schema
+        # Create property graph schema
         schema = GraphSchema(
             nodes=[person_node, city_node],
             relationships=[knows_rel, lives_in_rel],
@@ -209,3 +209,24 @@ class TestModels:
         assert len(schema_dict['nodes']) == 2
         assert len(schema_dict['relationships']) == 2
         assert len(schema_dict['relationship_patterns']) == 2
+
+    def test_property_graph_schema_empty(self):
+        """Test creating an empty PropertyGraphSchema.
+
+        This test verifies that:
+        1. A PropertyGraphSchema can be created with empty lists
+        2. The attributes are correctly initialized as empty lists
+        """
+        # Create empty property graph schema
+        schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
+
+        # Verify attributes
+        assert len(schema.nodes) == 0
+        assert len(schema.relationships) == 0
+        assert len(schema.relationship_patterns) == 0
+
+        # Test serialization
+        schema_dict = schema.model_dump()
+        assert schema_dict['nodes'] == []
+        assert schema_dict['relationships'] == []
+        assert schema_dict['relationship_patterns'] == []
