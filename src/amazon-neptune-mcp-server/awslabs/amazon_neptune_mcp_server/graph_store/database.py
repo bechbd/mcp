@@ -4,8 +4,12 @@ import requests
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.base import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
+    ClassItem,
+    DatatypePropertyItem,
     GraphSchema,
     Node,
+    ObjectPropertyItem,
+    OntologyItem,
     Property,
     RDFGraphSchema,
     Relationship,
@@ -358,45 +362,178 @@ class NeptuneDatabase(NeptuneGraph):
         # Prefixes
         prefixes = {}
 
-        # Classes
+        # SPARQL query for ontology, classes, and properties
         classes_query = """
-        SELECT DISTINCT ?elem
-        WHERE {
-        ?elem a owl:Class .
-        }
-        """
-        classes_result = self._query_sparql(classes_query)
-        classes = []
-        for binding in classes_result['results']['bindings']:
-            iri = binding['elem']['value']
-            try:
-                prefix, local = self._get_local_name(iri)
-                prefixes[prefix] = prefix
-                classes.append(URIItem(uri=iri, local=local))
-            except ValueError:
-                pass
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX gb: <http://graph.build/ontology/>
+        PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-        # Relations
-        rels_query = """
-        SELECT DISTINCT ?elem
+        CONSTRUCT {
+          ?ontology a owl:Ontology ;
+            rdfs:label ?label ;
+            rdfs:comment ?comment .
+
+          ?class a owl:Class ;
+            rdfs:subClassOf ?classParent ;
+            rdfs:label ?classLabel ;
+            rdfs:comment ?classComment .
+
+          ?datatypeProperty a owl:DatatypeProperty ;
+            rdfs:subPropertyOf ?datatypePropertyParent ;
+            rdfs:domain ?datatypePropertyDomain ;
+            rdfs:range ?datatypePropertyRange ;
+            rdfs:label ?datatypePropertyLabel ;
+            rdfs:comment ?datatypePropertyComment .
+
+          ?objectProperty a owl:ObjectProperty ;
+            rdfs:subPropertyOf ?objectPropertyParent ;
+            rdfs:domain ?objectPropertyDomain ;
+            rdfs:range ?objectPropertyRange ;
+            rdfs:label ?objectPropertyLabel ;
+            rdfs:comment ?objectPropertyComment .
+        }
         WHERE {
-        ?elem a rdf:Property .
+          OPTIONAL {
+            ?ontology a owl:Ontology .
+            OPTIONAL { ?ontology rdfs:label ?label . }
+            OPTIONAL { ?ontology rdfs:comment ?comment . }
+          }
+
+          OPTIONAL {
+            ?class a owl:Class .
+            OPTIONAL { ?class rdfs:subClassOf ?classParent . }
+            OPTIONAL { ?class rdfs:label ?classLabel . }
+            OPTIONAL { ?class rdfs:comment ?classComment . }
+          }
+
+          OPTIONAL {
+            ?datatypeProperty a owl:DatatypeProperty .
+            OPTIONAL { ?datatypeProperty rdfs:subPropertyOf ?datatypePropertyParent . }
+            OPTIONAL { ?datatypeProperty rdfs:domain ?datatypePropertyDomain . }
+            OPTIONAL { ?datatypeProperty rdfs:range ?datatypePropertyRange . }
+            OPTIONAL { ?datatypeProperty rdfs:label ?datatypePropertyLabel . }
+            OPTIONAL { ?datatypeProperty rdfs:comment ?datatypePropertyComment . }
+          }
+
+          OPTIONAL {
+            ?objectProperty a owl:ObjectProperty .
+            OPTIONAL { ?objectProperty rdfs:subPropertyOf ?objectPropertyParent . }
+            OPTIONAL { ?objectProperty rdfs:domain ?objectPropertyDomain . }
+            OPTIONAL { ?objectProperty rdfs:range ?objectPropertyRange . }
+            OPTIONAL { ?objectProperty rdfs:label ?objectPropertyLabel . }
+            OPTIONAL { ?objectProperty rdfs:comment ?objectPropertyComment . }
+          }
         }
         """
-        rels_result = self._query_sparql(rels_query)
+        results = self._query_sparql(classes_query)
+
+        # Process results
+        ontologies = {}
+        classes = {}
+        dtprops = {}
+        oprops = {}
         rels = []
-        for binding in rels_result['results']['bindings']:
-            iri = binding['elem']['value']
-            try:
-                prefix, local = self._get_local_name(iri)
-                prefixes[prefix] = prefix
-                rels.append(URIItem(uri=iri, local=local))
-            except ValueError:
-                pass
 
+        # Extract triples from results
+        if 'results' in results:
+            bindings = results['results'].get('bindings', [])
+            for binding in bindings:
+                if 's' in binding and 'p' in binding and 'o' in binding:
+                    s = binding['s']['value']
+                    p = binding['p']['value']
+                    o = binding['o']['value']
+
+                    # Process ontology
+                    if (
+                        p == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                        and o == 'http://www.w3.org/2002/07/owl#Ontology'
+                    ):
+                        ontologies[s] = OntologyItem(uri=s)
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#label' and s in ontologies:
+                        ontologies[s].label = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#comment' and s in ontologies:
+                        ontologies[s].comment = o
+
+                    # Process classes
+                    if (
+                        p == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                        and o == 'http://www.w3.org/2002/07/owl#Class'
+                    ):
+                        try:
+                            prefix, local = self._get_local_name(s)
+                            if prefix not in prefixes:
+                                prefixes[prefix] = f'ns{len(prefixes)}'
+                            if s not in classes:
+                                classes[s] = ClassItem(uri=s, local=local)
+                        except ValueError:
+                            pass
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#subClassOf' and s in classes:
+                        classes[s].parent_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#label' and s in classes:
+                        classes[s].label = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#comment' and s in classes:
+                        classes[s].comment = o
+
+                    # Process datatype properties
+                    if (
+                        p == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                        and o == 'http://www.w3.org/2002/07/owl#DatatypeProperty'
+                    ):
+                        try:
+                            prefix, local = self._get_local_name(s)
+                            if prefix not in prefixes:
+                                prefixes[prefix] = f'ns{len(prefixes)}'
+                            if s not in dtprops:
+                                dtprops[s] = DatatypePropertyItem(uri=s, local=local)
+                        except ValueError:
+                            pass
+                    elif (
+                        p == 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf' and s in dtprops
+                    ):
+                        dtprops[s].parent_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#domain' and s in dtprops:
+                        dtprops[s].domain_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#range' and s in dtprops:
+                        dtprops[s].range_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#label' and s in dtprops:
+                        dtprops[s].label = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#comment' and s in dtprops:
+                        dtprops[s].comment = o
+
+                    # Process object properties
+                    if (
+                        p == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+                        and o == 'http://www.w3.org/2002/07/owl#ObjectProperty'
+                    ):
+                        try:
+                            prefix, local = self._get_local_name(s)
+                            if prefix not in prefixes:
+                                prefixes[prefix] = f'ns{len(prefixes)}'
+                            if s not in oprops:
+                                oprops[s] = ObjectPropertyItem(uri=s, local=local)
+                                rels.append(URIItem(uri=s, local=local))
+                        except ValueError:
+                            pass
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf' and s in oprops:
+                        oprops[s].parent_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#domain' and s in oprops:
+                        oprops[s].domain_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#range' and s in oprops:
+                        oprops[s].range_uri = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#label' and s in oprops:
+                        oprops[s].label = o
+                    elif p == 'http://www.w3.org/2000/01/rdf-schema#comment' and s in oprops:
+                        oprops[s].comment = o
+
+        # Update schema elements
         schema_elements.distinct_prefixes = prefixes
-        schema_elements.classes = classes
+        schema_elements.ontologies = list(ontologies.values())
+        schema_elements.classes = list(classes.values())
         schema_elements.rels = rels
+        schema_elements.dtprops = list(dtprops.values())
+        schema_elements.oprops = list(oprops.values())
 
         self.rdf_schema = schema_elements
         return schema_elements

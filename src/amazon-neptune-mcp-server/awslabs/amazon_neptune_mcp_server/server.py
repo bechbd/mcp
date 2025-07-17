@@ -75,7 +75,7 @@ def get_status_resource() -> str:
 
 @mcp.resource(
     uri='amazon-neptune://schema',
-    name='PropertyGraphSchema',
+    name='GraphSchema',
     mime_type='application/text',
 )
 def get_propertygraph_schema_resource() -> GraphSchema:
@@ -85,7 +85,9 @@ def get_propertygraph_schema_resource() -> GraphSchema:
     return get_graph().propertygraph_schema()
 
 
-@mcp.resource(uri='amazon-neptune://schema', name='GraphSchema', mime_type='application/text')
+@mcp.resource(
+    uri='amazon-neptune://schema/rdf', name='RDFGraphSchema', mime_type='application/text'
+)
 def get_rdf_schema_resource() -> RDFGraphSchema:
     """Get the schema for the graph including the classes , relations, and data type combinations."""
     return get_graph().rdf_schema()

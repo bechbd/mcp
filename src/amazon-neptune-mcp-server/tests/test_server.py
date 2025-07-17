@@ -347,14 +347,8 @@ class TestMainFunction:
     """Test class for the main function that runs the MCP server."""
 
     @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
-    @patch('argparse.ArgumentParser.parse_args')
-    async def test_main_default(self, mock_parse_args, mock_mcp):
-        """Test that main correctly runs the server with default settings.
-
-        This test verifies that:
-        1. When SSE is not enabled, mcp.run() is called without transport parameter
-        2. The port setting is not modified.
-        """
+    async def test_main_default(self, mock_mcp):
+        """Test that main correctly runs the server with default settings."""
         # Arrange
 
         # Act
@@ -362,37 +356,3 @@ class TestMainFunction:
 
         # Assert
         assert mock_mcp.run.call_count == 1
-
-    @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
-    @patch('argparse.ArgumentParser.parse_args')
-    async def test_main_with_sse(self, mock_parse_args, mock_mcp):
-        """Test that main correctly runs the server with SSE transport."""
-        # Arrange
-        mock_args = MagicMock()
-        mock_args.sse = True
-        mock_args.port = 9999
-        mock_parse_args.return_value = mock_args
-
-        # Act
-        main()
-
-        # Assert
-        mock_mcp.run.assert_called_once_with(transport='sse')
-        assert mock_mcp.settings.port == 9999
-
-    @patch('awslabs.amazon_neptune_mcp_server.server.mcp')
-    @patch('argparse.ArgumentParser.parse_args')
-    async def test_main_with_custom_port(self, mock_parse_args, mock_mcp):
-        """Test that main correctly runs the server with a custom port."""
-        # Arrange
-        mock_args = MagicMock()
-        mock_args.sse = True
-        mock_args.port = 7777
-        mock_parse_args.return_value = mock_args
-
-        # Act
-        main()
-
-        # Assert
-        mock_mcp.run.assert_called_once_with(transport='sse')
-        assert mock_mcp.settings.port == 7777

@@ -115,19 +115,87 @@ class URIItem(BaseModel):
     local: str
 
 
+class OntologyItem(BaseModel):
+    """Represents an ontology with its metadata.
+
+    Attributes:
+        uri (str): The full URI of the ontology
+        label (str | None): The human-readable label of the ontology
+        comment (str | None): A description or comment about the ontology
+    """
+
+    uri: str
+    label: str | None = None
+    comment: str | None = None
+
+
+class ClassItem(BaseModel):
+    """Represents a class definition in an RDF schema.
+
+    Attributes:
+        uri (str): The full URI of the class
+        local (str): The local name/identifier of the class
+        parent_uri (str | None): The URI of the parent class if it exists
+        label (str | None): The human-readable label of the class
+        comment (str | None): A description or comment about the class
+    """
+
+    uri: str
+    local: str
+    parent_uri: str | None = None
+    label: str | None = None
+    comment: str | None = None
+
+
+class PropertyItem(BaseModel):
+    """Base class for RDF properties.
+
+    Attributes:
+        uri (str): The full URI of the property
+        local (str): The local name/identifier of the property
+        parent_uri (str | None): The URI of the parent property if it exists
+        domain_uri (str | None): The URI of the domain class
+        range_uri (str | None): The URI of the range class or datatype
+        label (str | None): The human-readable label of the property
+        comment (str | None): A description or comment about the property
+    """
+
+    uri: str
+    local: str
+    parent_uri: str | None = None
+    domain_uri: str | None = None
+    range_uri: str | None = None
+    label: str | None = None
+    comment: str | None = None
+
+
+class DatatypePropertyItem(PropertyItem):
+    """Represents a datatype property in an RDF schema."""
+
+    pass
+
+
+class ObjectPropertyItem(PropertyItem):
+    """Represents an object property in an RDF schema."""
+
+    pass
+
+
 class RDFGraphSchema(BaseModel):
     """Represents a complete RDF schema definition.
 
     Attributes:
         distinct_prefixes (Dict[str, str]): Mapping of URI prefixes to their aliases
-        classes (List[URIItem]): List of class definitions with URIs and local names
+        ontologies (List[OntologyItem]): List of ontology definitions with metadata
+        classes (List[ClassItem]): List of class definitions with hierarchies and metadata
         rels (List[URIItem]): List of relationship definitions with URIs and local names
-        dtprops (List): List of datatype properties (empty in the provided schema)
-        oprops (List): List of object properties (empty in the provided schema)
+        dtprops (List[DatatypePropertyItem]): List of datatype properties with domains, ranges, and metadata
+        oprops (List[ObjectPropertyItem]): List of object properties with domains, ranges, and metadata
     """
 
     distinct_prefixes: dict[str, str]
-    classes: List[URIItem]
-    rels: List[URIItem]
-    dtprops: List = []
-    oprops: List = []
+    ontologies: List[OntologyItem] = []
+    classes: List[ClassItem] = []
+    rels: List[URIItem] = []
+    dtprops: List[DatatypePropertyItem] = []
+    oprops: List[ObjectPropertyItem] = []
