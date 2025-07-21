@@ -214,8 +214,8 @@ class TestNeptuneAnalytics:
         assert knows_pattern.right_node == 'Person'
 
     @patch('boto3.Session')
-    async def test_get_schema_cached(self, mock_session):
-        """Test that get_schema returns cached schema when available.
+    async def test_get_lpg_schema_cached(self, mock_session):
+        """Test that get_lpg_schema returns cached schema when available.
         This test verifies that:
         1. When schema is already cached, _refresh_schema is not called
         2. The cached schema is returned.
@@ -235,14 +235,14 @@ class TestNeptuneAnalytics:
             analytics = NeptuneAnalytics(graph_identifier='test-graph-id')
 
             # Act
-            result = analytics.get_schema()
+            result = analytics.get_lpg_schema()
 
             # Assert - just verify the result is the mock schema
             assert result == mock_schema
 
     @patch('boto3.Session')
-    async def test_get_schema_refresh(self, mock_session):
-        """Test that get_schema refreshes schema when not cached.
+    async def test_get_lpg_schema_refresh(self, mock_session):
+        """Test that get_lpg_schema refreshes schema when not cached.
         This test verifies that:
         1. When schema is not cached, _refresh_schema is called
         2. The refreshed schema is returned.
@@ -269,7 +269,7 @@ class TestNeptuneAnalytics:
             NeptuneAnalytics._refresh_schema.return_value = mock_schema
 
             # Act
-            result = analytics.get_schema()
+            result = analytics.get_lpg_schema()
 
             # Assert
             NeptuneAnalytics._refresh_schema.assert_called_once()

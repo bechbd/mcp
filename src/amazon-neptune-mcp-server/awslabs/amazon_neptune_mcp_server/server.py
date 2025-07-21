@@ -104,7 +104,7 @@ def get_status() -> str:
 
 
 @mcp.tool(name='get_graph_schema')
-def get_property_graph_schema() -> GraphSchema:
+def get_graph_schema() -> GraphSchema:
     """Get the schema for the property graph including the vertex and edge labels as well as the
     (vertex)-[edge]->(vertex) combinations.
     """
@@ -113,7 +113,7 @@ def get_property_graph_schema() -> GraphSchema:
 
 @mcp.tool(name='get_rdf_schema')
 def get_rdf_schema() -> RDFGraphSchema:
-    """Get the schema for the graph including the classes , relations, and data type combinations."""
+    """Get the schema for the graph including the classes, relations, and data type combinations."""
     return get_graph().rdf_schema()
 
 

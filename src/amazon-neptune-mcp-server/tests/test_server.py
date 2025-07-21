@@ -16,7 +16,7 @@
 import pytest
 from awslabs.amazon_neptune_mcp_server.server import (
     get_graph,
-    get_property_graph_schema,
+    get_graph_schema,
     get_propertygraph_schema_resource,
     get_rdf_schema,
     get_rdf_schema_resource,
@@ -55,8 +55,8 @@ class TestServerTools:
         mock_graph.status.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
-    async def test_get_property_graph_schema(self, mock_get_graph):
-        """Test that get_property_graph_schema correctly returns the property graph schema from the graph.
+    async def test_get_graph_schema(self, mock_get_graph):
+        """Test that get_graph_schema correctly returns the property graph schema from the graph.
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
         2. The propertygraph_schema method is called on the graph instance
@@ -69,7 +69,7 @@ class TestServerTools:
         mock_get_graph.return_value = mock_graph
 
         # Act
-        result = get_property_graph_schema()
+        result = get_graph_schema()
 
         # Assert
         assert result == mock_schema
@@ -273,7 +273,7 @@ class TestGraphInitialization:
 
         # Assert
         assert graph == mock_server
-        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', use_https=True)
+        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', port=8182, use_https=True)
 
         # Call again to verify singleton behavior
         graph2 = get_graph()
@@ -329,7 +329,7 @@ class TestGraphInitialization:
 
         # Assert
         assert graph == mock_server
-        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', use_https=False)
+        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', port=8182, use_https=False)
 
 
 @pytest.mark.asyncio

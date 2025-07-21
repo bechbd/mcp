@@ -27,13 +27,13 @@ from awslabs.amazon_neptune_mcp_server.models import (
 from unittest.mock import MagicMock, patch
 
 
-@pytest.mark.asyncio
 class TestRDFFunctionality:
     """Test class for the RDF functionality in the NeptuneDatabase class."""
 
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.NeptuneDatabase._query_sparql')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.boto3.Session')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
-    def test_get_local_name(self, mock_request, mock_session):
+    def test_get_local_name(self, mock_request, mock_session, mock_query_sparql):
         """Test the _get_local_name method for extracting local names from IRIs.
         
         This test verifies that:
@@ -43,6 +43,7 @@ class TestRDFFunctionality:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
         mock_session.return_value = mock_session_instance
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
@@ -54,6 +55,9 @@ class TestRDFFunctionality:
         mock_client.get_rdf_graph_summary.return_value = {
             'payload': {'graphSummary': {'classes': [], 'predicates': []}}
         }
+        
+        # Mock the _query_sparql method to avoid SigV4Auth issues
+        mock_query_sparql.return_value = {'results': {'bindings': []}}
         
         # Create a NeptuneDatabase instance
         db = NeptuneDatabase('test-host')
@@ -72,9 +76,10 @@ class TestRDFFunctionality:
         with pytest.raises(ValueError, match="Unexpected IRI 'invalid-iri', contains neither '#' nor '/'"):
             db._get_local_name('invalid-iri')
 
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.NeptuneDatabase._query_sparql')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.boto3.Session')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
-    def test_query_sparql(self, mock_request, mock_session):
+    def test_query_sparql(self, mock_request, mock_session, mock_query_sparql):
         """Test the query_sparql method for executing SPARQL queries.
         
         This test verifies that:
@@ -83,6 +88,7 @@ class TestRDFFunctionality:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
         mock_session.return_value = mock_session_instance
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
@@ -95,26 +101,27 @@ class TestRDFFunctionality:
             'payload': {'graphSummary': {'classes': [], 'predicates': []}}
         }
         
-        # Mock the response from the SPARQL query
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({'results': {'bindings': []}})
-        mock_request.return_value = mock_response
+        # Mock the _query_sparql method to avoid SigV4Auth issues
+        mock_query_sparql.return_value = {'results': {'bindings': []}}
         
-        # Create a NeptuneDatabase instance with a mocked _query_sparql method
+        # Create a NeptuneDatabase instance
         db = NeptuneDatabase('test-host')
-        db._query_sparql = MagicMock(return_value={'results': {'bindings': []}})
+        
+        # Reset the mock to track new calls
+        mock_query_sparql.reset_mock()
         
         # Act
         query = 'SELECT * WHERE { ?s ?p ?o } LIMIT 10'
         result = db.query_sparql(query)
         
         # Assert
-        db._query_sparql.assert_called_once_with(query)
+        mock_query_sparql.assert_called_once_with(query)
         assert result == {'results': {'bindings': []}}
 
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.NeptuneDatabase._query_sparql')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.boto3.Session')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
-    def test_get_rdf_schema(self, mock_request, mock_session):
+    def test_get_rdf_schema(self, mock_request, mock_session, mock_query_sparql):
         """Test the get_rdf_schema method for retrieving the RDF schema.
         
         This test verifies that:
@@ -124,6 +131,7 @@ class TestRDFFunctionality:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
         mock_session.return_value = mock_session_instance
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
@@ -144,8 +152,7 @@ class TestRDFFunctionality:
         }
         
         # Mock the SPARQL query response
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({
+        mock_query_sparql.return_value = {
             'results': {
                 'bindings': [
                     {
@@ -195,14 +202,16 @@ class TestRDFFunctionality:
                     }
                 ]
             }
-        })
-        mock_request.return_value = mock_response
+        }
         
         # Create a NeptuneDatabase instance
         db = NeptuneDatabase('test-host')
         
         # Reset the rdf_schema to None to force a refresh
         db.rdf_schema = None
+        
+        # Reset the mock to track new calls
+        mock_query_sparql.reset_mock()
         
         # Act
         schema = db.get_rdf_schema()
@@ -237,10 +246,14 @@ class TestRDFFunctionality:
         assert len(schema.rels) == 1
         assert schema.rels[0].uri == 'http://example.org/worksFor'
         assert schema.rels[0].local == 'worksFor'
+        
+        # Verify that _query_sparql was called
+        mock_query_sparql.assert_called_once()
 
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.NeptuneDatabase._query_sparql')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.boto3.Session')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
-    def test_get_rdf_schema_cached(self, mock_request, mock_session):
+    def test_get_rdf_schema_cached(self, mock_request, mock_session, mock_query_sparql):
         """Test that get_rdf_schema returns the cached schema if available.
         
         This test verifies that:
@@ -249,6 +262,7 @@ class TestRDFFunctionality:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
         mock_session.return_value = mock_session_instance
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
@@ -260,6 +274,9 @@ class TestRDFFunctionality:
         mock_client.get_rdf_graph_summary.return_value = {
             'payload': {'graphSummary': {'classes': [], 'predicates': []}}
         }
+        
+        # Mock the _query_sparql method to avoid SigV4Auth issues
+        mock_query_sparql.return_value = {'results': {'bindings': []}}
         
         # Create a NeptuneDatabase instance
         db = NeptuneDatabase('test-host')
@@ -274,8 +291,9 @@ class TestRDFFunctionality:
         # Set the cached schema
         db.rdf_schema = mock_schema
         
-        # Reset the mock to track new calls
+        # Reset the mocks to track new calls
         mock_client.get_rdf_graph_summary.reset_mock()
+        mock_query_sparql.reset_mock()
         
         # Act
         schema = db.get_rdf_schema()
@@ -283,3 +301,4 @@ class TestRDFFunctionality:
         # Assert
         assert schema == mock_schema
         mock_client.get_rdf_graph_summary.assert_not_called()  # Should not be called again
+        mock_query_sparql.assert_not_called()  # Should not be called again

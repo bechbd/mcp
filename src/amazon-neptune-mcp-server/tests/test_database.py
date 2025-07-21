@@ -35,16 +35,25 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
+        # Mock API responses
+        mock_client.get_propertygraph_summary.return_value = {
+            'payload': {'graphSummary': {'nodeLabels': [], 'edgeLabels': []}}
+        }
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
+        }
+
+        # Mock _refresh_lpg_schema to avoid actual API calls
         with patch.object(
             NeptuneDatabase,
-            '_refresh_schema',
+            '_refresh_lpg_schema',
             return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ):
+        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Act
             db = NeptuneDatabase(host='test-endpoint', port=8182, use_https=True)
 
@@ -64,16 +73,25 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
+        # Mock API responses
+        mock_client.get_propertygraph_summary.return_value = {
+            'payload': {'graphSummary': {'nodeLabels': [], 'edgeLabels': []}}
+        }
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
+        }
+
+        # Mock _refresh_lpg_schema to avoid actual API calls
         with patch.object(
             NeptuneDatabase,
-            '_refresh_schema',
+            '_refresh_lpg_schema',
             return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ):
+        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Act
             NeptuneDatabase(
                 host='test-endpoint',
@@ -96,16 +114,25 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls
+        # Mock API responses
+        mock_client.get_propertygraph_summary.return_value = {
+            'payload': {'graphSummary': {'nodeLabels': [], 'edgeLabels': []}}
+        }
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
+        }
+
+        # Mock _refresh_lpg_schema to avoid actual API calls
         with patch.object(
             NeptuneDatabase,
-            '_refresh_schema',
+            '_refresh_lpg_schema',
             return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ):
+        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Act
             NeptuneDatabase(host='test-endpoint', port=8182, use_https=False)
 
@@ -131,7 +158,7 @@ class TestNeptuneDatabase:
             NeptuneDatabase(host='test-endpoint')
 
     @patch('boto3.Session')
-    async def test_init_refresh_schema_error(self, mock_session):
+    async def test_init_refresh_lpg_schema_error(self, mock_session):
         """Test handling of schema refresh errors.
 
         This test verifies that:
@@ -140,14 +167,20 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to raise an exception
+        # Mock API responses
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
+        }
+
+        # Mock _refresh_lpg_schema to raise an exception
         with patch.object(
-            NeptuneDatabase, '_refresh_schema', side_effect=Exception('Schema refresh error')
-        ):
+            NeptuneDatabase, '_refresh_lpg_schema', side_effect=Exception('Schema refresh error')
+        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Act & Assert
             with pytest.raises(NeptuneException) as exc_info:
                 NeptuneDatabase(host='test-endpoint')
@@ -164,6 +197,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -174,8 +208,8 @@ class TestNeptuneDatabase:
             'payload': {'graphSummary': mock_summary}
         }
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -195,6 +229,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -202,8 +237,8 @@ class TestNeptuneDatabase:
         # Mock the API to raise an exception
         mock_client.get_propertygraph_summary.side_effect = Exception('API error')
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -224,6 +259,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -239,8 +275,8 @@ class TestNeptuneDatabase:
 
         mock_client.get_propertygraph_summary.return_value = MockResponse()
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -260,12 +296,13 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -291,6 +328,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -299,8 +337,8 @@ class TestNeptuneDatabase:
         mock_result = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -323,6 +361,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -331,8 +370,8 @@ class TestNeptuneDatabase:
         mock_result = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -355,6 +394,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -363,8 +403,8 @@ class TestNeptuneDatabase:
         mock_results = [{'n': {'id': '1'}}]
         mock_client.execute_open_cypher_query.return_value = {'results': mock_results}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -384,6 +424,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -392,8 +433,8 @@ class TestNeptuneDatabase:
         mock_result = [{'id': '1'}]
         mock_client.execute_gremlin_query.return_value = {'result': mock_result}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -412,6 +453,7 @@ class TestNeptuneDatabase:
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -420,8 +462,8 @@ class TestNeptuneDatabase:
         mock_results = [{'id': '1'}]
         mock_client.execute_gremlin_query.return_value = {'results': mock_results}
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema'):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -435,11 +477,12 @@ class TestNeptuneDatabase:
     async def test_get_schema_cached(self, mock_session):
         """Test that get_schema returns cached schema when available.
         This test verifies that:
-        1. When schema is already cached, _refresh_schema is not called
+        1. When schema is already cached, _refresh_lpg_schema is not called
         2. The cached schema is returned.
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -447,13 +490,13 @@ class TestNeptuneDatabase:
         # Create a mock schema
         mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema', return_value=mock_schema):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
             # Act
-            result = db.get_schema()
+            result = db.get_lpg_schema()
 
             # Assert - just verify the result is the mock schema
             assert result == mock_schema
@@ -463,11 +506,12 @@ class TestNeptuneDatabase:
     async def test_get_schema_refresh(self, mock_session):
         """Test that get_schema refreshes schema when not cached.
         This test verifies that:
-        1. When schema is not cached, _refresh_schema is called
+        1. When schema is not cached, _refresh_lpg_schema is called
         2. The refreshed schema is returned.
         """
         # Arrange
         mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'  # Add region_name attribute
         mock_client = MagicMock()
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
@@ -475,8 +519,8 @@ class TestNeptuneDatabase:
         # Create a mock schema
         mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
-        # Mock _refresh_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_schema', return_value=mock_schema):
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -484,12 +528,12 @@ class TestNeptuneDatabase:
             db.schema = None
 
             # Reset the mock to verify it's called again
-            NeptuneDatabase._refresh_schema.reset_mock()
-            NeptuneDatabase._refresh_schema.return_value = mock_schema
+            NeptuneDatabase._refresh_lpg_schema.reset_mock()
+            NeptuneDatabase._refresh_lpg_schema.return_value = mock_schema
 
             # Act
-            result = db.get_schema()
+            result = db.get_lpg_schema()
 
             # Assert
-            NeptuneDatabase._refresh_schema.assert_called_once()
+            NeptuneDatabase._refresh_lpg_schema.assert_called_once()
             assert result == mock_schema
