@@ -16,13 +16,16 @@
 import pytest
 from awslabs.amazon_neptune_mcp_server.server import (
     get_graph,
-    get_schema,
-    get_schema_resource,
+    get_property_graph_schema,
+    get_propertygraph_schema_resource,
+    get_rdf_schema,
+    get_rdf_schema_resource,
     get_status,
     get_status_resource,
     main,
     run_gremlin_query,
     run_opencypher_query,
+    run_sparql_query,
 )
 from unittest.mock import MagicMock, patch
 
@@ -52,25 +55,46 @@ class TestServerTools:
         mock_graph.status.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
-    async def test_get_schema(self, mock_get_graph):
-        """Test that get_schema correctly returns the schema from the graph.
+    async def test_get_property_graph_schema(self, mock_get_graph):
+        """Test that get_property_graph_schema correctly returns the property graph schema from the graph.
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
-        2. The schema method is called on the graph instance
-        3. The result from the graph's schema method is returned unchanged.
+        2. The propertygraph_schema method is called on the graph instance
+        3. The result from the graph's propertygraph_schema method is returned unchanged.
         """
         # Arrange
         mock_graph = MagicMock()
         mock_schema = MagicMock()
-        mock_graph.schema.return_value = mock_schema
+        mock_graph.propertygraph_schema.return_value = mock_schema
         mock_get_graph.return_value = mock_graph
 
         # Act
-        result = get_schema()
+        result = get_property_graph_schema()
 
         # Assert
         assert result == mock_schema
-        mock_graph.schema.assert_called_once()
+        mock_graph.propertygraph_schema.assert_called_once()
+        
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_get_rdf_schema(self, mock_get_graph):
+        """Test that get_rdf_schema correctly returns the RDF schema from the graph.
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The rdf_schema method is called on the graph instance
+        3. The result from the graph's rdf_schema method is returned unchanged.
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_schema = MagicMock()
+        mock_graph.rdf_schema.return_value = mock_schema
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = get_rdf_schema()
+
+        # Assert
+        assert result == mock_schema
+        mock_graph.rdf_schema.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_run_opencypher_query(self, mock_get_graph):
@@ -137,6 +161,27 @@ class TestServerTools:
         # Assert
         assert result == mock_result
         mock_graph.query_gremlin.assert_called_once_with('g.V().limit(1)')
+        
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_run_sparql_query(self, mock_get_graph):
+        """Test that run_sparql_query correctly executes a SPARQL query.
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The query_sparql method is called with the correct query
+        3. The result from the graph's query_sparql method is returned unchanged.
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_result = {'results': [{'s': 'http://example.org/subject', 'p': 'http://example.org/predicate', 'o': 'Object'}]}
+        mock_graph.query_sparql.return_value = mock_result
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = run_sparql_query('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
+
+        # Assert
+        assert result == mock_result
+        mock_graph.query_sparql.assert_called_once_with('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_status_resource(self, mock_get_graph):
@@ -159,25 +204,46 @@ class TestServerTools:
         mock_graph.status.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
-    async def test_get_schema_resource(self, mock_get_graph):
-        """Test that get_schema_resource correctly returns the schema from the graph.
+    async def test_get_propertygraph_schema_resource(self, mock_get_graph):
+        """Test that get_propertygraph_schema_resource correctly returns the property graph schema from the graph.
         This test verifies that:
         1. The get_graph function is called to obtain the graph instance
-        2. The schema method is called on the graph instance
-        3. The result from the graph's schema method is returned unchanged.
+        2. The propertygraph_schema method is called on the graph instance
+        3. The result from the graph's propertygraph_schema method is returned unchanged.
         """
         # Arrange
         mock_graph = MagicMock()
         mock_schema = MagicMock()
-        mock_graph.schema.return_value = mock_schema
+        mock_graph.propertygraph_schema.return_value = mock_schema
         mock_get_graph.return_value = mock_graph
 
         # Act
-        result = get_schema_resource()
+        result = get_propertygraph_schema_resource()
 
         # Assert
         assert result == mock_schema
-        mock_graph.schema.assert_called_once()
+        mock_graph.propertygraph_schema.assert_called_once()
+        
+    @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
+    async def test_get_rdf_schema_resource(self, mock_get_graph):
+        """Test that get_rdf_schema_resource correctly returns the RDF schema from the graph.
+        This test verifies that:
+        1. The get_graph function is called to obtain the graph instance
+        2. The rdf_schema method is called on the graph instance
+        3. The result from the graph's rdf_schema method is returned unchanged.
+        """
+        # Arrange
+        mock_graph = MagicMock()
+        mock_schema = MagicMock()
+        mock_graph.rdf_schema.return_value = mock_schema
+        mock_get_graph.return_value = mock_graph
+
+        # Act
+        result = get_rdf_schema_resource()
+
+        # Assert
+        assert result == mock_schema
+        mock_graph.rdf_schema.assert_called_once()
 
 
 @pytest.mark.asyncio

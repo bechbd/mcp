@@ -1,17 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import boto3
 import json
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
@@ -20,6 +6,7 @@ from awslabs.amazon_neptune_mcp_server.models import (
     GraphSchema,
     Node,
     Property,
+    RDFGraphSchema,
     Relationship,
     RelationshipPattern,
 )
@@ -122,7 +109,7 @@ class NeptuneAnalytics(NeptuneGraph):
         self.schema = graph
         return graph
 
-    def get_schema(self) -> GraphSchema:
+    def get_lpg_schema(self) -> GraphSchema:
         """Returns the current graph schema, refreshing it if necessary.
 
         Returns:
@@ -135,6 +122,33 @@ class NeptuneAnalytics(NeptuneGraph):
             if self.schema
             else GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
         )
+
+    def propertygraph_schema(self) -> GraphSchema:
+        """Returns the property graph schema, refreshing it if necessary.
+
+        Returns:
+            PropertyGraphSchema: Complete schema information for the property graph
+        """
+        return self.get_lpg_schema()
+
+    def get_rdf_schema(self) -> RDFGraphSchema:
+        """Returns the RDF schema (not supported for Neptune Analytics).
+
+        Raises:
+            NotImplementedError: RDF schema is not supported for Neptune Analytics
+        """
+        raise NotImplementedError('RDF schema not supported for Neptune Analytics graphs.')
+
+    def query_sparql(self, query: str) -> dict:
+        """Executes a SPARQL query (not supported for Neptune Analytics).
+
+        Args:
+            query: The SPARQL query string
+
+        Raises:
+            NotImplementedError: SPARQL queries are not supported for Neptune Analytics
+        """
+        raise NotImplementedError('RDF queries are not supported for Neptune Analytics graphs.')
 
     def query_opencypher(self, query: str, params: Optional[dict] = None):
         """Executes an openCypher query against the Neptune Analytics graph.

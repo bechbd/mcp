@@ -14,7 +14,7 @@
 """Tests for the NeptuneServer class."""
 
 import pytest
-from awslabs.amazon_neptune_mcp_server.models import GraphSchema
+from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
 from awslabs.amazon_neptune_mcp_server.neptune import NeptuneServer
 from unittest.mock import MagicMock, patch
 
@@ -132,26 +132,48 @@ class TestNeptuneServer:
         mock_db_instance.query_opencypher.assert_called_once_with('RETURN 1', None)
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
-    async def test_schema(self, mock_neptune_db):
-        """Test that schema() correctly returns the graph schema.
+    async def test_propertygraph_schema(self, mock_neptune_db):
+        """Test that propertygraph_schema() correctly returns the property graph schema.
         This test verifies that:
-        1. The get_schema method is called on the graph instance
-        2. The result from the graph's get_schema method is returned unchanged.
+        1. The get_lpg_schema method is called on the graph instance
+        2. The result from the graph's get_lpg_schema method is returned unchanged.
         """
         # Arrange
         mock_db_instance = MagicMock()
         mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
-        mock_db_instance.get_schema.return_value = mock_schema
+        mock_db_instance.get_lpg_schema.return_value = mock_schema
         mock_neptune_db.return_value = mock_db_instance
 
         server = NeptuneServer('neptune-db://test-endpoint')
 
         # Act
-        schema = server.schema()
+        schema = server.propertygraph_schema()
 
         # Assert
         assert schema == mock_schema
-        mock_db_instance.get_schema.assert_called_once()
+        mock_db_instance.get_lpg_schema.assert_called_once()
+        
+    @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
+    async def test_rdf_schema(self, mock_neptune_db):
+        """Test that rdf_schema() correctly returns the RDF graph schema.
+        This test verifies that:
+        1. The get_rdf_schema method is called on the graph instance
+        2. The result from the graph's get_rdf_schema method is returned unchanged.
+        """
+        # Arrange
+        mock_db_instance = MagicMock()
+        mock_schema = RDFGraphSchema(distinct_prefixes={})
+        mock_db_instance.get_rdf_schema.return_value = mock_schema
+        mock_neptune_db.return_value = mock_db_instance
+
+        server = NeptuneServer('neptune-db://test-endpoint')
+
+        # Act
+        schema = server.rdf_schema()
+
+        # Assert
+        assert schema == mock_schema
+        mock_db_instance.get_rdf_schema.assert_called_once()
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
     async def test_query_opencypher(self, mock_neptune_db):
@@ -224,3 +246,26 @@ class TestNeptuneServer:
         # Assert
         assert result == mock_result
         mock_db_instance.query_gremlin.assert_called_once_with('g.V().limit(1)')
+        
+    @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
+    async def test_query_sparql(self, mock_neptune_db):
+        """Test that query_sparql correctly executes a SPARQL query.
+
+        This test verifies that:
+        1. The query_sparql method is called on the graph instance with the correct query
+        2. The result from the graph's query_sparql method is returned unchanged.
+        """
+        # Arrange
+        mock_db_instance = MagicMock()
+        mock_result = {'results': [{'s': 'http://example.org/subject', 'p': 'http://example.org/predicate', 'o': 'Object'}]}
+        mock_db_instance.query_sparql.return_value = mock_result
+        mock_neptune_db.return_value = mock_db_instance
+
+        server = NeptuneServer('neptune-db://test-endpoint')
+
+        # Act
+        result = server.query_sparql('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
+
+        # Assert
+        assert result == mock_result
+        mock_db_instance.query_sparql.assert_called_once_with('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
