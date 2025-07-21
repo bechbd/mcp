@@ -585,7 +585,7 @@ class NeptuneDatabase(NeptuneGraph):
         s = SPARQLWrapper('')
         s.setQuery(query)
         query = ' '.join(line.strip() for line in query.splitlines())
-        query_type = s.queryType.upper()
+        query_type = str(s.queryType).upper()
         headers = {}
         headers['Accept'] = 'application/json'
         if query_type in ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']:
@@ -604,9 +604,8 @@ class NeptuneDatabase(NeptuneGraph):
         SigV4Auth(
             self.session.get_credentials(), 'neptunedata', self.session.region_name
         ).add_auth(request)
-        request_hdr = request.headers
 
-        resp = requests.request(method='POST', url=url, headers=request_hdr, data=data)
+        resp = requests.request(method='POST', url=url, headers=dict(request.headers), data=data)
 
         logger.debug(f'Neptune response: {json.dumps(resp.text, indent=2)}')
 
