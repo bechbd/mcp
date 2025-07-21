@@ -596,7 +596,7 @@ class NeptuneDatabase(NeptuneGraph):
             logger.debug('_query_sparql query type: query')
             data = f'update={query}'
             headers['Content-Type'] = 'application/sparql-update'
-        request_hdr = None
+
         url = f'{self.endpoint_url}/sparql'
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         request = AWSRequest(method='POST', url=url, data=data, params=None, headers=headers)
