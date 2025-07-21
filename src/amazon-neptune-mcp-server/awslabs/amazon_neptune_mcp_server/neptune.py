@@ -102,7 +102,7 @@ class NeptuneServer:
             AttributeError: If engine type is unknown
         """
         return self.graph.get_lpg_schema()
-    
+
     def rdf_schema(self) -> RDFGraphSchema:
         """Retrieve the schema information from the Neptune instance.
 
@@ -141,7 +141,7 @@ class NeptuneServer:
             ValueError: If using unsupported query language for analytics
         """
         return self.graph.query_gremlin(query)
-    
+
     def query_sparql(self, query: str) -> dict:
         """Execute an SPARQL query against the Neptune instance.
 
@@ -152,5 +152,5 @@ class NeptuneServer:
 
         Raises:
             ValueError: If using unsupported query language for analytics
-        """    
+        """
         return self.graph.query_sparql(query)

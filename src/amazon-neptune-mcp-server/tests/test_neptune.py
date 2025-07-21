@@ -152,7 +152,7 @@ class TestNeptuneServer:
         # Assert
         assert schema == mock_schema
         mock_db_instance.get_lpg_schema.assert_called_once()
-        
+
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
     async def test_rdf_schema(self, mock_neptune_db):
         """Test that rdf_schema() correctly returns the RDF graph schema.
@@ -246,7 +246,7 @@ class TestNeptuneServer:
         # Assert
         assert result == mock_result
         mock_db_instance.query_gremlin.assert_called_once_with('g.V().limit(1)')
-        
+
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
     async def test_query_sparql(self, mock_neptune_db):
         """Test that query_sparql correctly executes a SPARQL query.
@@ -257,7 +257,15 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        mock_result = {'results': [{'s': 'http://example.org/subject', 'p': 'http://example.org/predicate', 'o': 'Object'}]}
+        mock_result = {
+            'results': [
+                {
+                    's': 'http://example.org/subject',
+                    'p': 'http://example.org/predicate',
+                    'o': 'Object',
+                }
+            ]
+        }
         mock_db_instance.query_sparql.return_value = mock_result
         mock_neptune_db.return_value = mock_db_instance
 
@@ -268,4 +276,6 @@ class TestNeptuneServer:
 
         # Assert
         assert result == mock_result
-        mock_db_instance.query_sparql.assert_called_once_with('SELECT * WHERE { ?s ?p ?o } LIMIT 1')
+        mock_db_instance.query_sparql.assert_called_once_with(
+            'SELECT * WHERE { ?s ?p ?o } LIMIT 1'
+        )

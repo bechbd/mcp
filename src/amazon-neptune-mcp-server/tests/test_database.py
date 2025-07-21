@@ -49,11 +49,16 @@ class TestNeptuneDatabase:
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_lpg_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(
+                NeptuneDatabase,
+                '_refresh_lpg_schema',
+                return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+            ),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Act
             db = NeptuneDatabase(host='test-endpoint', port=8182, use_https=True)
 
@@ -87,11 +92,16 @@ class TestNeptuneDatabase:
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_lpg_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(
+                NeptuneDatabase,
+                '_refresh_lpg_schema',
+                return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+            ),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Act
             NeptuneDatabase(
                 host='test-endpoint',
@@ -128,11 +138,16 @@ class TestNeptuneDatabase:
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls
-        with patch.object(
-            NeptuneDatabase,
-            '_refresh_lpg_schema',
-            return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
-        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(
+                NeptuneDatabase,
+                '_refresh_lpg_schema',
+                return_value=GraphSchema(nodes=[], relationships=[], relationship_patterns=[]),
+            ),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Act
             NeptuneDatabase(host='test-endpoint', port=8182, use_https=False)
 
@@ -178,9 +193,16 @@ class TestNeptuneDatabase:
         }
 
         # Mock _refresh_lpg_schema to raise an exception
-        with patch.object(
-            NeptuneDatabase, '_refresh_lpg_schema', side_effect=Exception('Schema refresh error')
-        ), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(
+                NeptuneDatabase,
+                '_refresh_lpg_schema',
+                side_effect=Exception('Schema refresh error'),
+            ),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Act & Assert
             with pytest.raises(NeptuneException) as exc_info:
                 NeptuneDatabase(host='test-endpoint')
@@ -209,7 +231,12 @@ class TestNeptuneDatabase:
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -238,7 +265,12 @@ class TestNeptuneDatabase:
         mock_client.get_propertygraph_summary.side_effect = Exception('API error')
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -276,7 +308,12 @@ class TestNeptuneDatabase:
         mock_client.get_propertygraph_summary.return_value = MockResponse()
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -302,7 +339,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -338,7 +380,12 @@ class TestNeptuneDatabase:
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -371,7 +418,12 @@ class TestNeptuneDatabase:
         mock_client.execute_open_cypher_query.return_value = {'result': mock_result}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -404,7 +456,12 @@ class TestNeptuneDatabase:
         mock_client.execute_open_cypher_query.return_value = {'results': mock_results}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -434,7 +491,12 @@ class TestNeptuneDatabase:
         mock_client.execute_gremlin_query.return_value = {'result': mock_result}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -463,7 +525,12 @@ class TestNeptuneDatabase:
         mock_client.execute_gremlin_query.return_value = {'results': mock_results}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -491,7 +558,12 @@ class TestNeptuneDatabase:
         mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -520,7 +592,12 @@ class TestNeptuneDatabase:
         mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema), patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=mock_schema),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 

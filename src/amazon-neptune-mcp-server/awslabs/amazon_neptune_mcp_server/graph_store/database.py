@@ -1,7 +1,19 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import boto3
 import json
 import requests
-from SPARQLWrapper import SPARQLWrapper
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.base import NeptuneGraph
 from awslabs.amazon_neptune_mcp_server.models import (
@@ -17,10 +29,10 @@ from awslabs.amazon_neptune_mcp_server.models import (
     RelationshipPattern,
     URIItem,
 )
-from botocore.awsrequest import AWSRequest
 from botocore.auth import SigV4Auth
-
+from botocore.awsrequest import AWSRequest
 from loguru import logger
+from SPARQLWrapper import SPARQLWrapper
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 
@@ -325,9 +337,7 @@ class NeptuneDatabase(NeptuneGraph):
             Any: The query results, either as a single result or a list of results
         """
         logger.debug(f'Querying Neptune with Gremlin: {query}')
-        resp = self.client.execute_gremlin_query(
-            gremlinQuery=query
-        )
+        resp = self.client.execute_gremlin_query(gremlinQuery=query)
 
         logger.debug(f'Neptune response: {json.dumps(resp, indent=2)}')
         return resp['result'] if 'result' in resp else resp['results']
@@ -365,7 +375,13 @@ class NeptuneDatabase(NeptuneGraph):
             RDFGraphSchema: Complete schema information for the RDF graph
         """
         schema_elements: RDFGraphSchema = RDFGraphSchema(
-            distinct_prefixes={}, classes=[], rels=[], dtprops=[], oprops=[], rdfclasses=[], predicates=[]
+            distinct_prefixes={},
+            classes=[],
+            rels=[],
+            dtprops=[],
+            oprops=[],
+            rdfclasses=[],
+            predicates=[],
         )
 
         if self.rdf_schema is not None:
@@ -374,17 +390,19 @@ class NeptuneDatabase(NeptuneGraph):
         # First get the schema from the summary
         resp = self.client.get_rdf_graph_summary()
         schema_elements.rdfclasses = list(resp['payload']['graphSummary']['classes'])
-        schema_elements.predicates = list(key for d in resp['payload']['graphSummary']['predicates'] for key in d.keys())
-        
+        schema_elements.predicates = [
+            key for d in resp['payload']['graphSummary']['predicates'] for key in d.keys()
+        ]
+
         # Prefixes
         prefixes = {}
 
         # SPARQL query for ontology, classes, and properties
-        classes_query = """PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-        PREFIX dcterms: <http://purl.org/dc/terms/> 
-        PREFIX gb: <http://graph.build/ontology/> 
-        PREFIX sh: <http://www.w3.org/ns/shacl#> 
+        classes_query = """PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX gb: <http://graph.build/ontology/>
+        PREFIX sh: <http://www.w3.org/ns/shacl#>
 
         CONSTRUCT {
           ?ontology a owl:Ontology ;
@@ -566,31 +584,29 @@ class NeptuneDatabase(NeptuneGraph):
         logger.debug(f'Querying Neptune with SPARQL: {query}')
         s = SPARQLWrapper('')
         s.setQuery(query)
-        query = " ".join(line.strip() for line in query.splitlines())
+        query = ' '.join(line.strip() for line in query.splitlines())
         query_type = s.queryType.upper()
-        headers={}
-        headers["Accept"] = 'application/json'
+        headers = {}
+        headers['Accept'] = 'application/json'
         if query_type in ['SELECT', 'CONSTRUCT', 'ASK', 'DESCRIBE']:
-            logger.debug(f'_query_sparql query type: query')
-            data = f"query={query}"
-            headers["Content-Type"] = "application/sparql-query"
+            logger.debug('_query_sparql query type: query')
+            data = f'query={query}'
+            headers['Content-Type'] = 'application/sparql-query'
         else:
-            logger.debug(f'_query_sparql query type: query')
-            data = f"update={query}"
-            headers["Content-Type"] = "application/sparql-update"
+            logger.debug('_query_sparql query type: query')
+            data = f'update={query}'
+            headers['Content-Type'] = 'application/sparql-update'
         request_hdr = None
         url = f'{self.endpoint_url}/sparql'
-        headers["Content-Type"] = 'application/x-www-form-urlencoded'
-        request = AWSRequest(
-            method="POST", url=url, data=data, params=None, headers=headers
-        )
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        request = AWSRequest(method='POST', url=url, data=data, params=None, headers=headers)
 
-        SigV4Auth(self.session.get_credentials(), 'neptunedata', self.session.region_name).add_auth(request)
+        SigV4Auth(
+            self.session.get_credentials(), 'neptunedata', self.session.region_name
+        ).add_auth(request)
         request_hdr = request.headers
 
-        resp = requests.request(
-            method="POST", url=url, headers=request_hdr, data=data
-        )
+        resp = requests.request(method='POST', url=url, headers=request_hdr, data=data)
 
         logger.debug(f'Neptune response: {json.dumps(resp.text, indent=2)}')
 

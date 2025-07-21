@@ -103,6 +103,7 @@ class GraphSchema(BaseModel):
     relationships: List[Relationship]
     relationship_patterns: List[RelationshipPattern]
 
+
 class URIItem(BaseModel):
     """Represents an item with a URI and local name.
 

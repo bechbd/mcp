@@ -14,18 +14,17 @@
 """Tests for the data models."""
 
 from awslabs.amazon_neptune_mcp_server.models import (
+    ClassItem,
+    DatatypePropertyItem,
     GraphSchema,
     Node,
+    ObjectPropertyItem,
+    OntologyItem,
     Property,
+    RDFGraphSchema,
     Relationship,
     RelationshipPattern,
-    RDFGraphSchema,
     URIItem,
-    OntologyItem,
-    ClassItem,
-    PropertyItem,
-    DatatypePropertyItem,
-    ObjectPropertyItem,
 )
 
 
@@ -251,7 +250,7 @@ class TestModels:
         ontology = OntologyItem(
             uri='http://example.org/ontology',
             label='Example Ontology',
-            comment='An example ontology for testing'
+            comment='An example ontology for testing',
         )
 
         # Verify attributes
@@ -264,7 +263,7 @@ class TestModels:
         assert ontology_dict == {
             'uri': 'http://example.org/ontology',
             'label': 'Example Ontology',
-            'comment': 'An example ontology for testing'
+            'comment': 'An example ontology for testing',
         }
 
     def test_class_item_model(self):
@@ -281,7 +280,7 @@ class TestModels:
             local='Person',
             parent_uri='http://example.org/Agent',
             label='Person Class',
-            comment='Represents a person'
+            comment='Represents a person',
         )
 
         # Verify attributes
@@ -298,7 +297,7 @@ class TestModels:
             'local': 'Person',
             'parent_uri': 'http://example.org/Agent',
             'label': 'Person Class',
-            'comment': 'Represents a person'
+            'comment': 'Represents a person',
         }
 
     def test_datatype_property_item_model(self):
@@ -316,7 +315,7 @@ class TestModels:
             domain_uri='http://example.org/Person',
             range_uri='http://www.w3.org/2001/XMLSchema#integer',
             label='Age',
-            comment='The age of a person'
+            comment='The age of a person',
         )
 
         # Verify attributes
@@ -336,7 +335,7 @@ class TestModels:
             'domain_uri': 'http://example.org/Person',
             'range_uri': 'http://www.w3.org/2001/XMLSchema#integer',
             'label': 'Age',
-            'comment': 'The age of a person'
+            'comment': 'The age of a person',
         }
 
     def test_object_property_item_model(self):
@@ -354,7 +353,7 @@ class TestModels:
             domain_uri='http://example.org/Person',
             range_uri='http://example.org/Person',
             label='Knows',
-            comment='Indicates that a person knows another person'
+            comment='Indicates that a person knows another person',
         )
 
         # Verify attributes
@@ -374,7 +373,7 @@ class TestModels:
             'domain_uri': 'http://example.org/Person',
             'range_uri': 'http://example.org/Person',
             'label': 'Knows',
-            'comment': 'Indicates that a person knows another person'
+            'comment': 'Indicates that a person knows another person',
         }
 
     def test_rdf_graph_schema_model(self):
@@ -389,34 +388,19 @@ class TestModels:
         prefixes = {'ex': 'http://example.org/'}
 
         # Create ontologies
-        ontology = OntologyItem(
-            uri='http://example.org/ontology',
-            label='Example Ontology'
-        )
+        ontology = OntologyItem(uri='http://example.org/ontology', label='Example Ontology')
 
         # Create classes
-        person_class = ClassItem(
-            uri='http://example.org/Person',
-            local='Person'
-        )
+        person_class = ClassItem(uri='http://example.org/Person', local='Person')
 
         # Create relationships
-        knows_rel = URIItem(
-            uri='http://example.org/knows',
-            local='knows'
-        )
+        knows_rel = URIItem(uri='http://example.org/knows', local='knows')
 
         # Create datatype properties
-        age_prop = DatatypePropertyItem(
-            uri='http://example.org/age',
-            local='age'
-        )
+        age_prop = DatatypePropertyItem(uri='http://example.org/age', local='age')
 
         # Create object properties
-        knows_prop = ObjectPropertyItem(
-            uri='http://example.org/knows',
-            local='knows'
-        )
+        knows_prop = ObjectPropertyItem(uri='http://example.org/knows', local='knows')
 
         # Create RDF classes and predicates
         rdfclasses = ['http://example.org/Person']
@@ -431,7 +415,7 @@ class TestModels:
             dtprops=[age_prop],
             oprops=[knows_prop],
             rdfclasses=rdfclasses,
-            predicates=predicates
+            predicates=predicates,
         )
 
         # Verify attributes

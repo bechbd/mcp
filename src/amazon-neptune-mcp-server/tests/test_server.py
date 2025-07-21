@@ -74,7 +74,7 @@ class TestServerTools:
         # Assert
         assert result == mock_schema
         mock_graph.propertygraph_schema.assert_called_once()
-        
+
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_rdf_schema(self, mock_get_graph):
         """Test that get_rdf_schema correctly returns the RDF schema from the graph.
@@ -161,7 +161,7 @@ class TestServerTools:
         # Assert
         assert result == mock_result
         mock_graph.query_gremlin.assert_called_once_with('g.V().limit(1)')
-        
+
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_run_sparql_query(self, mock_get_graph):
         """Test that run_sparql_query correctly executes a SPARQL query.
@@ -172,7 +172,15 @@ class TestServerTools:
         """
         # Arrange
         mock_graph = MagicMock()
-        mock_result = {'results': [{'s': 'http://example.org/subject', 'p': 'http://example.org/predicate', 'o': 'Object'}]}
+        mock_result = {
+            'results': [
+                {
+                    's': 'http://example.org/subject',
+                    'p': 'http://example.org/predicate',
+                    'o': 'Object',
+                }
+            ]
+        }
         mock_graph.query_sparql.return_value = mock_result
         mock_get_graph.return_value = mock_graph
 
@@ -223,7 +231,7 @@ class TestServerTools:
         # Assert
         assert result == mock_schema
         mock_graph.propertygraph_schema.assert_called_once()
-        
+
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_rdf_schema_resource(self, mock_get_graph):
         """Test that get_rdf_schema_resource correctly returns the RDF schema from the graph.
@@ -273,7 +281,9 @@ class TestGraphInitialization:
 
         # Assert
         assert graph == mock_server
-        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', port=8182, use_https=True)
+        mock_neptune_server.assert_called_once_with(
+            'neptune-db://test-endpoint', port=8182, use_https=True
+        )
 
         # Call again to verify singleton behavior
         graph2 = get_graph()
@@ -329,7 +339,9 @@ class TestGraphInitialization:
 
         # Assert
         assert graph == mock_server
-        mock_neptune_server.assert_called_once_with('neptune-db://test-endpoint', port=8182, use_https=False)
+        mock_neptune_server.assert_called_once_with(
+            'neptune-db://test-endpoint', port=8182, use_https=False
+        )
 
 
 @pytest.mark.asyncio

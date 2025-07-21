@@ -128,6 +128,7 @@ def run_gremlin_query(query: str) -> dict:
     """Executes the provided Tinkerpop Gremlin against the graph."""
     return get_graph().query_gremlin(query)
 
+
 @mcp.tool(name='run_sparql_query')
 def run_sparql_query(query: str) -> dict:
     """Executes the provided SPARQL against the RDF graph."""
