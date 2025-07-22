@@ -359,7 +359,6 @@ class TestMainFunction:
         # Assert
         assert mock_mcp.run.call_count == 1
 
-
     @patch('os.environ.get')
     @patch('awslabs.amazon_neptune_mcp_server.server.NeptuneServer')
     async def test_get_graph_with_custom_port(self, mock_neptune_server, mock_environ_get):
@@ -378,6 +377,7 @@ class TestMainFunction:
 
         # Reset the global _graph variable
         import awslabs.amazon_neptune_mcp_server.server
+
         awslabs.amazon_neptune_mcp_server.server._graph = None
 
         mock_server = MagicMock()
@@ -428,6 +428,7 @@ class TestMainFunction:
 
             # Reset the global _graph variable
             import awslabs.amazon_neptune_mcp_server.server
+
             awslabs.amazon_neptune_mcp_server.server._graph = None
 
             # Act
@@ -464,7 +465,6 @@ class TestMainFunction:
         mock_graph.query_sparql.assert_called_once_with(query)
         mock_logger.assert_called_once_with(f'query: {query}')
 
-
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
     async def test_get_rdf_schema_resource_error_handling(self, mock_get_graph):
         """Test error handling in get_rdf_schema_resource.
@@ -474,12 +474,13 @@ class TestMainFunction:
         """
         # Arrange
         mock_graph = MagicMock()
-        mock_graph.rdf_schema.side_effect = Exception("Test error")
+        mock_graph.rdf_schema.side_effect = Exception('Test error')
         mock_get_graph.return_value = mock_graph
 
         # Act & Assert
         from awslabs.amazon_neptune_mcp_server.server import get_rdf_schema_resource
-        with pytest.raises(Exception, match="Test error"):
+
+        with pytest.raises(Exception, match='Test error'):
             get_rdf_schema_resource()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
@@ -491,12 +492,13 @@ class TestMainFunction:
         """
         # Arrange
         mock_graph = MagicMock()
-        mock_graph.propertygraph_schema.side_effect = Exception("Test error")
+        mock_graph.propertygraph_schema.side_effect = Exception('Test error')
         mock_get_graph.return_value = mock_graph
 
         # Act & Assert
         from awslabs.amazon_neptune_mcp_server.server import get_propertygraph_schema_resource
-        with pytest.raises(Exception, match="Test error"):
+
+        with pytest.raises(Exception, match='Test error'):
             get_propertygraph_schema_resource()
 
     @patch('awslabs.amazon_neptune_mcp_server.server.get_graph')
@@ -508,10 +510,11 @@ class TestMainFunction:
         """
         # Arrange
         mock_graph = MagicMock()
-        mock_graph.status.side_effect = Exception("Test error")
+        mock_graph.status.side_effect = Exception('Test error')
         mock_get_graph.return_value = mock_graph
 
         # Act & Assert
         from awslabs.amazon_neptune_mcp_server.server import get_status_resource
-        with pytest.raises(Exception, match="Test error"):
+
+        with pytest.raises(Exception, match='Test error'):
             get_status_resource()

@@ -39,17 +39,16 @@ class TestRDFSchema:
 
         # Mock the RDF graph summary response with empty data
         mock_client.get_rdf_graph_summary.return_value = {
-            'payload': {
-                'graphSummary': {
-                    'classes': [],
-                    'predicates': []
-                }
-            }
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
         }
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -92,7 +91,7 @@ class TestRDFSchema:
             'payload': {
                 'graphSummary': {
                     'classes': ['http://example.org/Person', 'http://example.org/Movie'],
-                    'predicates': []
+                    'predicates': [],
                 }
             }
         }
@@ -105,20 +104,24 @@ class TestRDFSchema:
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'},
                     },
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'Person'}
-                    }
+                        'o': {'value': 'Person'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -172,8 +175,8 @@ class TestRDFSchema:
                     'classes': [],
                     'predicates': [
                         {'http://example.org/name': {}},
-                        {'http://example.org/age': {}}
-                    ]
+                        {'http://example.org/age': {}},
+                    ],
                 }
             }
         }
@@ -186,20 +189,24 @@ class TestRDFSchema:
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'},
                     },
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'name'}
-                    }
+                        'o': {'value': 'name'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -251,7 +258,7 @@ class TestRDFSchema:
             'payload': {
                 'graphSummary': {
                     'classes': ['http://example.org/Person', 'invalid-iri'],
-                    'predicates': []
+                    'predicates': [],
                 }
             }
         }
@@ -264,21 +271,25 @@ class TestRDFSchema:
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'},
                     },
                     # Invalid IRI
                     {
                         's': {'value': 'invalid-iri'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'}
-                    }
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -323,12 +334,7 @@ class TestRDFSchema:
 
         # Mock the RDF graph summary response
         mock_client.get_rdf_graph_summary.return_value = {
-            'payload': {
-                'graphSummary': {
-                    'classes': [],
-                    'predicates': []
-                }
-            }
+            'payload': {'graphSummary': {'classes': [], 'predicates': []}}
         }
 
         # Mock SPARQL query response with ontology data
@@ -339,25 +345,29 @@ class TestRDFSchema:
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'},
                     },
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'Example Ontology'}
+                        'o': {'value': 'Example Ontology'},
                     },
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
-                        'o': {'value': 'An example ontology for testing'}
-                    }
+                        'o': {'value': 'An example ontology for testing'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -371,7 +381,7 @@ class TestRDFSchema:
             schema = db.get_rdf_schema()
 
             # Assert
-            mock_client.get_rdf_graph_summary.assert_called ()
+            mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
 
             # Check that the schema was stored in the instance
@@ -404,10 +414,7 @@ class TestRDFSchema:
         # Mock the RDF graph summary response
         mock_client.get_rdf_graph_summary.return_value = {
             'payload': {
-                'graphSummary': {
-                    'classes': [],
-                    'predicates': [{'http://example.org/knows': {}}]
-                }
+                'graphSummary': {'classes': [], 'predicates': [{'http://example.org/knows': {}}]}
             }
         }
 
@@ -419,30 +426,34 @@ class TestRDFSchema:
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf'},
-                        'o': {'value': 'http://example.org/related'}
+                        'o': {'value': 'http://example.org/related'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
-                        'o': {'value': 'http://example.org/Person'}
+                        'o': {'value': 'http://example.org/Person'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
-                        'o': {'value': 'http://example.org/Person'}
-                    }
+                        'o': {'value': 'http://example.org/Person'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -456,7 +467,7 @@ class TestRDFSchema:
             schema = db.get_rdf_schema()
 
             # Assert
-            mock_client.get_rdf_graph_summary.assert_called()
+            mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
 
             # Check that the schema was stored in the instance
@@ -500,7 +511,7 @@ class TestRDFSchema:
             'payload': {
                 'graphSummary': {
                     'classes': ['http://example.org/Person'],
-                    'predicates': [{'http://example.org/name': {}}]
+                    'predicates': [{'http://example.org/name': {}}],
                 }
             }
         }
@@ -509,8 +520,12 @@ class TestRDFSchema:
         mock_sparql_response = {}
 
         # Mock _refresh_lpg_schema to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -524,7 +539,7 @@ class TestRDFSchema:
             schema = db.get_rdf_schema()
 
             # Assert
-            mock_client.get_rdf_graph_summary.assert_called()
+            mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
 
             # Check that the schema was stored in the instance

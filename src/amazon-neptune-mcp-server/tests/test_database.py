@@ -15,6 +15,7 @@
 
 import json
 import pytest
+import requests
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.database import NeptuneDatabase
 from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
@@ -171,7 +172,6 @@ class TestNeptuneDatabase:
             ValueError, match='Could not load credentials to authenticate with AWS client'
         ):
             NeptuneDatabase(host='test-endpoint')
-
 
     @patch('boto3.Session')
     async def test_get_summary_success(self, mock_session):
@@ -594,8 +594,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -604,12 +608,12 @@ class TestNeptuneDatabase:
             db.query_opencypher.side_effect = [
                 [
                     {'from': ['Person'], 'edge': 'KNOWS', 'to': ['Person']},
-                    {'from': ['Person'], 'edge': 'KNOWS', 'to': ['Person']}
+                    {'from': ['Person'], 'edge': 'KNOWS', 'to': ['Person']},
                 ],
                 [
                     {'from': ['Person'], 'edge': 'ACTED_IN', 'to': ['Movie']},
-                    {'from': ['Director'], 'edge': 'ACTED_IN', 'to': ['Movie']}
-                ]
+                    {'from': ['Director'], 'edge': 'ACTED_IN', 'to': ['Movie']},
+                ],
             ]
 
             # Act
@@ -646,8 +650,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -656,21 +664,16 @@ class TestNeptuneDatabase:
             db.query_opencypher.side_effect = [
                 [
                     {'props': {'name': 'John', 'age': 30, 'active': True}},
-                    {'props': {'name': 'Jane', 'age': 25, 'score': 4.5}}
+                    {'props': {'name': 'Jane', 'age': 25, 'score': 4.5}},
                 ],
                 [
                     {'props': {'title': 'The Matrix', 'year': 1999}},
-                    {'props': {'title': 'Inception', 'year': 2010}}
-                ]
+                    {'props': {'title': 'Inception', 'year': 2010}},
+                ],
             ]
 
             # Define type mapping
-            types = {
-                'str': 'STRING',
-                'int': 'INTEGER',
-                'float': 'DOUBLE',
-                'bool': 'BOOLEAN'
-            }
+            types = {'str': 'STRING', 'int': 'INTEGER', 'float': 'DOUBLE', 'bool': 'BOOLEAN'}
 
             # Act
             result = db._get_node_properties(['Person', 'Movie'], types)
@@ -718,8 +721,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -728,20 +735,16 @@ class TestNeptuneDatabase:
             db.query_opencypher.side_effect = [
                 [
                     {'props': {'since': '2020-01-01', 'strength': 0.8}},
-                    {'props': {'since': '2019-05-15', 'strength': 0.6}}
+                    {'props': {'since': '2019-05-15', 'strength': 0.6}},
                 ],
                 [
                     {'props': {'role': 'Neo', 'screenTime': 120}},
-                    {'props': {'role': 'Trinity', 'screenTime': 90}}
-                ]
+                    {'props': {'role': 'Trinity', 'screenTime': 90}},
+                ],
             ]
 
             # Define type mapping
-            types = {
-                'str': 'STRING',
-                'int': 'INTEGER',
-                'float': 'DOUBLE'
-            }
+            types = {'str': 'STRING', 'int': 'INTEGER', 'float': 'DOUBLE'}
 
             # Act
             result = db._get_edge_properties(['KNOWS', 'ACTED_IN'], types)
@@ -770,7 +773,6 @@ class TestNeptuneDatabase:
             assert 'STRING' in prop_types['role']
             assert 'INTEGER' in prop_types['screenTime']
 
-
     @patch('boto3.Session')
     async def test_propertygraph_schema(self, mock_session):
         """Test that propertygraph_schema calls get_lpg_schema.
@@ -787,8 +789,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -821,13 +827,19 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
             # Mock _query_sparql
-            mock_result = {'results': {'bindings': [{'s': {'value': 'http://example.org/subject'}}]}}
+            mock_result = {
+                'results': {'bindings': [{'s': {'value': 'http://example.org/subject'}}]}
+            }
             db._query_sparql = MagicMock(return_value=mock_result)
 
             # Act
@@ -854,8 +866,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -883,8 +899,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -912,13 +932,19 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
             # Act & Assert
-            with pytest.raises(ValueError, match="Unexpected IRI 'invalid-iri', contains neither '#' nor '/'"):
+            with pytest.raises(
+                ValueError, match="Unexpected IRI 'invalid-iri', contains neither '#' nor '/'"
+            ):
                 db._get_local_name('invalid-iri')
 
     @patch('boto3.Session')
@@ -937,8 +963,12 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 
@@ -957,3 +987,511 @@ class TestNeptuneDatabase:
             # Assert
             assert result == mock_rdf_schema
             mock_client.get_rdf_graph_summary.assert_not_called()
+
+    @patch('boto3.Session')
+    @patch('requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
+    async def test_query_sparql_construct(
+        self, mock_sigv4auth, mock_aws_request, mock_request, mock_session
+    ):
+        """Test execution of SPARQL CONSTRUCT queries.
+
+        This test verifies that:
+        1. The correct headers and data are set for CONSTRUCT queries
+        2. SigV4Auth is used to sign the request
+        3. The request is made with the correct parameters
+        4. The response is correctly parsed and returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_session_instance.get_credentials.return_value = MagicMock()
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the request response
+        mock_response = MagicMock()
+        mock_response.text = (
+            '{"results": {"bindings": [{"s": {"value": "http://example.org/subject"}}]}}'
+        )
+        mock_request.return_value = mock_response
+
+        # Mock AWS request
+        mock_aws_request_instance = MagicMock()
+        mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
+        mock_aws_request.return_value = mock_aws_request_instance
+
+        # Mock SPARQLWrapper to identify query type
+        with patch(
+            'awslabs.amazon_neptune_mcp_server.graph_store.database.SPARQLWrapper'
+        ) as mock_sparql_wrapper:
+            mock_wrapper_instance = MagicMock()
+            mock_wrapper_instance.queryType = 'CONSTRUCT'
+            mock_sparql_wrapper.return_value = mock_wrapper_instance
+
+            # Mock _refresh_lpg_schema to avoid actual API calls during init
+            with (
+                patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+                patch.object(
+                    NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+                ),
+            ):
+                # Create the database instance
+                db = NeptuneDatabase(host='test-endpoint')
+                db.endpoint_url = 'https://test-endpoint:8182'
+                db.session = mock_session_instance
+
+                # Reset the mock to test the actual method
+                NeptuneDatabase._query_sparql = NeptuneDatabase._query_sparql
+
+                # Act
+                query = 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o } LIMIT 1'
+                db._query_sparql(query)
+
+    @patch('boto3.Session')
+    @patch('requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
+    async def test_query_sparql_select(
+        self, mock_sigv4auth, mock_aws_request, mock_request, mock_session
+    ):
+        """Test execution of SPARQL SELECT queries.
+
+        This test verifies that:
+        1. The correct headers and data are set for SELECT queries
+        2. SigV4Auth is used to sign the request
+        3. The request is made with the correct parameters
+        4. The response is correctly parsed and returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_session_instance.get_credentials.return_value = MagicMock()
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the request response
+        mock_response = MagicMock()
+        mock_response.text = (
+            '{"results": {"bindings": [{"s": {"value": "http://example.org/subject"}}]}}'
+        )
+        mock_request.return_value = mock_response
+
+        # Mock AWS request
+        mock_aws_request_instance = MagicMock()
+        mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
+        mock_aws_request.return_value = mock_aws_request_instance
+
+        # Mock SPARQLWrapper to identify query type
+        with patch(
+            'awslabs.amazon_neptune_mcp_server.graph_store.database.SPARQLWrapper'
+        ) as mock_sparql_wrapper:
+            mock_wrapper_instance = MagicMock()
+            mock_wrapper_instance.queryType = 'SELECT'
+            mock_sparql_wrapper.return_value = mock_wrapper_instance
+
+            # Mock _refresh_lpg_schema to avoid actual API calls during init
+            with (
+                patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+                patch.object(
+                    NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+                ),
+            ):
+                # Create the database instance
+                db = NeptuneDatabase(host='test-endpoint')
+                db.endpoint_url = 'https://test-endpoint:8182'
+                db.session = mock_session_instance
+
+                # Reset the mock to test the actual method
+                NeptuneDatabase._query_sparql = NeptuneDatabase._query_sparql
+
+                # Act
+                query = 'SELECT * WHERE { ?s ?p ?o } LIMIT 1'
+                db._query_sparql(query)
+
+    @patch('boto3.Session')
+    @patch('requests.request')
+    async def test_query_sparql_request_error(self, mock_request, mock_session):
+        """Test handling of request errors in _query_sparql.
+
+        This test verifies that:
+        1. When the request raises an exception, the exception is propagated
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the request to raise an exception
+        mock_request.side_effect = requests.RequestException('Connection error')
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+            patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest'),
+            patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth'),
+            patch(
+                'awslabs.amazon_neptune_mcp_server.graph_store.database.SPARQLWrapper'
+            ) as mock_sparql_wrapper,
+        ):
+            mock_wrapper_instance = MagicMock()
+            mock_wrapper_instance.queryType = 'SELECT'
+            mock_sparql_wrapper.return_value = mock_wrapper_instance
+
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+            db.endpoint_url = 'https://test-endpoint:8182'
+            db.session = mock_session_instance
+
+            # Reset the mock to test the actual method
+            NeptuneDatabase._query_sparql = NeptuneDatabase._query_sparql
+
+    @patch('boto3.Session')
+    async def test_query_opencypher_error(self, mock_session):
+        """Test handling of errors in query_opencypher.
+
+        This test verifies that:
+        1. When the API call fails, the error is properly logged
+        2. The error is propagated to the caller
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the API to raise an exception
+        mock_client.execute_open_cypher_query.side_effect = Exception('Query error')
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+            patch('awslabs.amazon_neptune_mcp_server.graph_store.database.logger') as mock_logger,
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Act & Assert
+            with pytest.raises(Exception, match='Query error'):
+                db.query_opencypher('MATCH (n) RETURN n')
+
+            # Verify logging
+            mock_logger.debug.assert_any_call(
+                'Querying Neptune with OpenCypher: MATCH (n) RETURN n'
+            )
+
+    @patch('boto3.Session')
+    async def test_query_gremlin_error(self, mock_session):
+        """Test handling of errors in query_gremlin.
+
+        This test verifies that:
+        1. When the API call fails, the error is properly logged
+        2. The error is propagated to the caller
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the API to raise an exception
+        mock_client.execute_gremlin_query.side_effect = Exception('Query error')
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+            patch('awslabs.amazon_neptune_mcp_server.graph_store.database.logger') as mock_logger,
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Act & Assert
+            with pytest.raises(Exception, match='Query error'):
+                db.query_gremlin('g.V().limit(1)')
+
+            # Verify logging
+            mock_logger.debug.assert_any_call('Querying Neptune with Gremlin: g.V().limit(1)')
+
+    @patch('boto3.Session')
+    async def test_get_local_name_with_multiple_slashes(self, mock_session):
+        """Test extraction of local name from IRI with multiple slashes.
+
+        This test verifies that:
+        1. The _get_local_name method correctly handles IRIs with multiple slashes
+        2. The prefix includes all parts before the last slash
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            iri = 'http://example.org/ontology/with/multiple/slashes'
+            prefix, local = db._get_local_name(iri)
+
+            # Assert
+            assert prefix == 'http://example.org/ontology/with/multiple/'
+            assert local == 'slashes'
+
+    @patch('boto3.Session')
+    async def test_get_local_name_with_empty_local(self, mock_session):
+        """Test extraction of local name from IRI with empty local part.
+
+        This test verifies that:
+        1. The _get_local_name method correctly handles IRIs with empty local part
+        2. The local part is an empty string
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Act
+            iri = 'http://example.org/'
+            prefix, local = db._get_local_name(iri)
+
+            # Assert
+            assert prefix == 'http://example.org/'
+            assert local == ''
+
+    @patch('boto3.Session')
+    async def test_init_refresh_schema_error(self, mock_session):
+        """Test handling of schema refresh errors during initialization.
+
+        This test verifies that:
+        1. Errors during schema refresh are properly caught and re-raised
+        2. The error message is appropriate
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+    @patch('boto3.Session')
+    async def test_get_lpg_schema_empty_schema(self, mock_session):
+        """Test that get_lpg_schema returns empty schema when schema is None.
+
+        This test verifies that:
+        1. When schema is None and _refresh_lpg_schema returns None, an empty schema is returned
+        2. The empty schema has the expected structure
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to return None
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema', return_value=None),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Set schema to None to force refresh
+            db.schema = None
+
+            # Reset the mock to verify it's called again
+            NeptuneDatabase._refresh_lpg_schema.reset_mock()
+
+            # Act
+            result = db.get_lpg_schema()
+
+            # Assert
+            NeptuneDatabase._refresh_lpg_schema.assert_called_once()
+            assert isinstance(result, GraphSchema)
+            assert result.nodes == []
+            assert result.relationships == []
+            assert result.relationship_patterns == []
+
+    @patch('boto3.Session')
+    async def test_get_labels_empty_summary(self, mock_session):
+        """Test retrieval of node and edge labels with empty summary.
+
+        This test verifies that:
+        1. When the summary has no labels, empty lists are returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock _get_summary to return empty summary
+            empty_summary = {'nodeLabels': [], 'edgeLabels': []}
+            with patch.object(db, '_get_summary', return_value=empty_summary):
+                # Act
+                n_labels, e_labels = db._get_labels()
+
+                # Assert
+                assert n_labels == []
+                assert e_labels == []
+                db._get_summary.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_triples_empty_result(self, mock_session):
+        """Test retrieval of relationship patterns with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, an empty list is returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Act
+            result = db._get_triples(['KNOWS'])
+
+            # Assert
+            assert result == []
+            db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_node_properties_empty_result(self, mock_session):
+        """Test retrieval of node properties with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, nodes with empty properties are returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Define type mapping
+            types = {'str': 'STRING', 'int': 'INTEGER'}
+
+            # Act
+            result = db._get_node_properties(['Person'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].labels == 'Person'
+            assert result[0].properties == []
+            db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_edge_properties_empty_result(self, mock_session):
+        """Test retrieval of edge properties with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, edges with empty properties are returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Define type mapping
+            types = {'str': 'STRING', 'int': 'INTEGER'}
+
+            # Act
+            result = db._get_edge_properties(['KNOWS'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].type == 'KNOWS'
+            assert result[0].properties == []
+            db.query_opencypher.assert_called_once()

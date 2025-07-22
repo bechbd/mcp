@@ -101,7 +101,6 @@ class TestNeptuneAnalytics:
         ):
             NeptuneAnalytics(graph_identifier='test-graph-id')
 
-
     @patch('boto3.Session')
     async def test_refresh_schema(self, mock_session):
         """Test schema refresh functionality.

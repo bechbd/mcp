@@ -58,7 +58,7 @@ class NeptuneServer:
             ValueError: If endpoint is not provided or has invalid format
         """
         if endpoint:
-            if endpoint.endswith("/"):
+            if endpoint.endswith('/'):
                 endpoint = endpoint[:-1]
             # self._logger.debug("NeptuneServer host: %s", endpoint)
             if endpoint.startswith('neptune-db://'):

@@ -49,9 +49,9 @@ class TestNeptuneGraph:
 
         # Act & Assert
         for method_name in abstract_methods:
-            assert hasattr(NeptuneGraph, method_name), f"NeptuneGraph should define {method_name}"
+            assert hasattr(NeptuneGraph, method_name), f'NeptuneGraph should define {method_name}'
             method = getattr(NeptuneGraph, method_name)
-            assert callable(method), f"{method_name} should be callable"
+            assert callable(method), f'{method_name} should be callable'
 
     def test_concrete_implementation_required(self):
         """Test that concrete implementations must implement all abstract methods.
@@ -60,6 +60,7 @@ class TestNeptuneGraph:
         1. A concrete subclass that doesn't implement all abstract methods cannot be instantiated
         2. The error message correctly indicates which methods are not implemented
         """
+
         # Arrange
         class IncompleteNeptuneGraph(NeptuneGraph):
             """Incomplete implementation of NeptuneGraph for testing."""
@@ -75,7 +76,7 @@ class TestNeptuneGraph:
         # Check that the error message mentions the missing methods
         error_message = str(excinfo.value)
         assert "Can't instantiate abstract class IncompleteNeptuneGraph" in error_message
-        assert "get_rdf_schema" in error_message
-        assert "query_opencypher" in error_message
-        assert "query_gremlin" in error_message
-        assert "query_sparql" in error_message
+        assert 'get_rdf_schema' in error_message
+        assert 'query_opencypher' in error_message
+        assert 'query_gremlin' in error_message
+        assert 'query_sparql' in error_message

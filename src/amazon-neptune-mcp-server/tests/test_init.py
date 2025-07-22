@@ -65,7 +65,9 @@ class TestInit:
 
         # Act & Assert
         assert hasattr(awslabs.amazon_neptune_mcp_server, '__version__')
-        assert re.match(semver_pattern, version) is not None, f"Version {version} does not follow semantic versioning"
+        assert re.match(semver_pattern, version) is not None, (
+            f'Version {version} does not follow semantic versioning'
+        )
 
     def test_package_docstring(self):
         """Test that the package has a docstring.
@@ -77,4 +79,3 @@ class TestInit:
         # Act & Assert
         assert awslabs.amazon_neptune_mcp_server.__doc__ is not None
         assert len(awslabs.amazon_neptune_mcp_server.__doc__) > 0
-

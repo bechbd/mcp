@@ -302,7 +302,6 @@ class TestRDFFunctionality:
         mock_client.get_rdf_graph_summary.assert_not_called()  # Should not be called again
         mock_query_sparql.assert_not_called()  # Should not be called again
 
-
     @patch('boto3.Session')
     async def test_get_rdf_schema_processing(self, mock_session):
         """Test processing of RDF schema data.
@@ -326,8 +325,8 @@ class TestRDFFunctionality:
                     'classes': ['http://example.org/Person', 'http://example.org/Movie'],
                     'predicates': [
                         {'http://example.org/name': {}},
-                        {'http://example.org/age': {}}
-                    ]
+                        {'http://example.org/age': {}},
+                    ],
                 }
             }
         }
@@ -340,106 +339,107 @@ class TestRDFFunctionality:
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'},
                     },
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'Example Ontology'}
+                        'o': {'value': 'Example Ontology'},
                     },
                     {
                         's': {'value': 'http://example.org/ontology'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
-                        'o': {'value': 'An example ontology for testing'}
+                        'o': {'value': 'An example ontology for testing'},
                     },
-
                     # Class
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'},
                     },
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subClassOf'},
-                        'o': {'value': 'http://example.org/Agent'}
+                        'o': {'value': 'http://example.org/Agent'},
                     },
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'Person'}
+                        'o': {'value': 'Person'},
                     },
                     {
                         's': {'value': 'http://example.org/Person'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
-                        'o': {'value': 'A person'}
+                        'o': {'value': 'A person'},
                     },
-
                     # Datatype Property
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'},
                     },
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
-                        'o': {'value': 'http://example.org/Person'}
+                        'o': {'value': 'http://example.org/Person'},
                     },
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
-                        'o': {'value': 'http://www.w3.org/2001/XMLSchema#string'}
+                        'o': {'value': 'http://www.w3.org/2001/XMLSchema#string'},
                     },
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'name'}
+                        'o': {'value': 'name'},
                     },
                     {
                         's': {'value': 'http://example.org/name'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
-                        'o': {'value': 'The name of a person'}
+                        'o': {'value': 'The name of a person'},
                     },
-
                     # Object Property
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
-                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'}
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf'},
-                        'o': {'value': 'http://example.org/related'}
+                        'o': {'value': 'http://example.org/related'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
-                        'o': {'value': 'http://example.org/Person'}
+                        'o': {'value': 'http://example.org/Person'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
-                        'o': {'value': 'http://example.org/Person'}
+                        'o': {'value': 'http://example.org/Person'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
-                        'o': {'value': 'knows'}
+                        'o': {'value': 'knows'},
                     },
                     {
                         's': {'value': 'http://example.org/knows'},
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
-                        'o': {'value': 'A person knows another person'}
-                    }
+                        'o': {'value': 'A person knows another person'},
+                    },
                 ]
             }
         }
 
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
-        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
-             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
 

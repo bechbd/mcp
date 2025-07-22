@@ -329,13 +329,13 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        mock_db_instance.query_gremlin.side_effect = Exception("Test error")
+        mock_db_instance.query_gremlin.side_effect = Exception('Test error')
         mock_neptune_db.return_value = mock_db_instance
 
         server = NeptuneServer('neptune-db://test-endpoint')
 
         # Act & Assert
-        with pytest.raises(Exception, match="Test error"):
+        with pytest.raises(Exception, match='Test error'):
             server.query_gremlin('g.V().limit(1)')
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
@@ -347,13 +347,13 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        mock_db_instance.query_sparql.side_effect = Exception("Test error")
+        mock_db_instance.query_sparql.side_effect = Exception('Test error')
         mock_neptune_db.return_value = mock_db_instance
 
         server = NeptuneServer('neptune-db://test-endpoint')
 
         # Act & Assert
-        with pytest.raises(Exception, match="Test error"):
+        with pytest.raises(Exception, match='Test error'):
             server.query_sparql('SELECT * WHERE { ?s ?p ?o }')
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
@@ -365,13 +365,13 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        mock_db_instance.get_lpg_schema.side_effect = Exception("Test error")
+        mock_db_instance.get_lpg_schema.side_effect = Exception('Test error')
         mock_neptune_db.return_value = mock_db_instance
 
         server = NeptuneServer('neptune-db://test-endpoint')
 
         # Act & Assert
-        with pytest.raises(Exception, match="Test error"):
+        with pytest.raises(Exception, match='Test error'):
             server.propertygraph_schema()
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
@@ -383,13 +383,13 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        mock_db_instance.get_rdf_schema.side_effect = Exception("Test error")
+        mock_db_instance.get_rdf_schema.side_effect = Exception('Test error')
         mock_neptune_db.return_value = mock_db_instance
 
         server = NeptuneServer('neptune-db://test-endpoint')
 
         # Act & Assert
-        with pytest.raises(Exception, match="Test error"):
+        with pytest.raises(Exception, match='Test error'):
             server.rdf_schema()
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.logger')
@@ -408,7 +408,9 @@ class TestNeptuneServer:
         NeptuneServer('neptune-db://test-endpoint')
 
         # Assert
-        mock_logger.debug.assert_called_with('Creating Neptune Database session for %s', 'test-endpoint')
+        mock_logger.debug.assert_called_with(
+            'Creating Neptune Database session for %s', 'test-endpoint'
+        )
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.logger')
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneAnalytics')
@@ -426,7 +428,9 @@ class TestNeptuneServer:
         NeptuneServer('neptune-graph://test-graph-id')
 
         # Assert
-        mock_logger.debug.assert_called_with('Creating Neptune Graph session for %s', 'neptune-graph://test-graph-id')
+        mock_logger.debug.assert_called_with(
+            'Creating Neptune Graph session for %s', 'neptune-graph://test-graph-id'
+        )
 
     @patch('awslabs.amazon_neptune_mcp_server.neptune.logger')
     @patch('awslabs.amazon_neptune_mcp_server.neptune.NeptuneDatabase')
@@ -439,7 +443,7 @@ class TestNeptuneServer:
         """
         # Arrange
         mock_db_instance = MagicMock()
-        test_exception = Exception("Connection error")
+        test_exception = Exception('Connection error')
         mock_db_instance.query_opencypher.side_effect = test_exception
         mock_neptune_db.return_value = mock_db_instance
 
