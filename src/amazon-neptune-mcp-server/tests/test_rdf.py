@@ -301,3 +301,207 @@ class TestRDFFunctionality:
         assert schema == mock_schema
         mock_client.get_rdf_graph_summary.assert_not_called()  # Should not be called again
         mock_query_sparql.assert_not_called()  # Should not be called again
+
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_processing(self, mock_session):
+        """Test processing of RDF schema data.
+        
+        This test verifies that:
+        1. The get_rdf_graph_summary API is called
+        2. The SPARQL query is executed to get ontology, classes, and properties
+        3. The schema elements are correctly processed from the query results
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the RDF graph summary response
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {
+                'graphSummary': {
+                    'classes': ['http://example.org/Person', 'http://example.org/Movie'],
+                    'predicates': [
+                        {'http://example.org/name': {}},
+                        {'http://example.org/age': {}}
+                    ]
+                }
+            }
+        }
+
+        # Mock SPARQL query response with ontology, class, and property data
+        mock_sparql_response = {
+            'results': {
+                'bindings': [
+                    # Ontology
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Example Ontology'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'An example ontology for testing'}
+                    },
+                    
+                    # Class
+                    {
+                        's': {'value': 'http://example.org/Person'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subClassOf'},
+                        'o': {'value': 'http://example.org/Agent'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Person'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'A person'}
+                    },
+                    
+                    # Datatype Property
+                    {
+                        's': {'value': 'http://example.org/name'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
+                        'o': {'value': 'http://example.org/Person'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
+                        'o': {'value': 'http://www.w3.org/2001/XMLSchema#string'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'name'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'The name of a person'}
+                    },
+                    
+                    # Object Property
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf'},
+                        'o': {'value': 'http://example.org/related'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
+                        'o': {'value': 'http://example.org/Person'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
+                        'o': {'value': 'http://example.org/Person'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'knows'}
+                    },
+                    {
+                        's': {'value': 'http://example.org/knows'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'A person knows another person'}
+                    }
+                ]
+            }
+        }
+
+        # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
+        with patch.object(NeptuneDatabase, '_refresh_lpg_schema'), \
+             patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+            
+            # Reset the rdf_schema to None to force refresh
+            db.rdf_schema = None
+            
+            # Mock _query_sparql to return the test data
+            db._query_sparql = MagicMock(return_value=mock_sparql_response)
+            
+            # Act
+            schema = db.get_rdf_schema()
+            
+            # Assert
+            mock_client.get_rdf_graph_summary.assert_called()
+            db._query_sparql.assert_called_once()
+            
+            # Check that the schema was stored in the instance
+            assert db.rdf_schema == schema
+            
+            # Check the schema elements
+            assert len(schema.rdfclasses) == 2
+            assert len(schema.predicates) == 2
+            assert len(schema.ontologies) == 1
+            assert len(schema.classes) == 1
+            assert len(schema.dtprops) == 1
+            assert len(schema.oprops) == 1
+            assert len(schema.rels) == 1
+            
+            # Check ontology details
+            ontology = schema.ontologies[0]
+            assert ontology.uri == 'http://example.org/ontology'
+            assert ontology.label == 'Example Ontology'
+            assert ontology.comment == 'An example ontology for testing'
+            
+            # Check class details
+            cls = schema.classes[0]
+            assert cls.uri == 'http://example.org/Person'
+            assert cls.local == 'Person'
+            assert cls.parent_uri == 'http://example.org/Agent'
+            assert cls.label == 'Person'
+            assert cls.comment == 'A person'
+            
+            # Check datatype property details
+            dt_prop = schema.dtprops[0]
+            assert dt_prop.uri == 'http://example.org/name'
+            assert dt_prop.local == 'name'
+            assert dt_prop.domain_uri == 'http://example.org/Person'
+            assert dt_prop.range_uri == 'http://www.w3.org/2001/XMLSchema#string'
+            assert dt_prop.label == 'name'
+            assert dt_prop.comment == 'The name of a person'
+            
+            # Check object property details
+            obj_prop = schema.oprops[0]
+            assert obj_prop.uri == 'http://example.org/knows'
+            assert obj_prop.local == 'knows'
+            assert obj_prop.parent_uri == 'http://example.org/related'
+            assert obj_prop.domain_uri == 'http://example.org/Person'
+            assert obj_prop.range_uri == 'http://example.org/Person'
+            assert obj_prop.label == 'knows'
+            assert obj_prop.comment == 'A person knows another person'
+            
+            # Check relationship details
+            rel = schema.rels[0]
+            assert rel.uri == 'http://example.org/knows'
+            assert rel.local == 'knows'

@@ -67,17 +67,6 @@ class NeptuneAnalytics(NeptuneGraph):
                 'profile name are valid.'
             ) from e
 
-        try:
-            self._refresh_schema()
-        except Exception as e:
-            logger.exception('Could not get schema for Neptune database')
-            raise NeptuneException(
-                {
-                    'message': 'Could not get schema for Neptune database',
-                    'detail': str(e),
-                }
-            )
-
     def _refresh_schema(self) -> GraphSchema:
         """Refreshes the Neptune graph schema information.
 

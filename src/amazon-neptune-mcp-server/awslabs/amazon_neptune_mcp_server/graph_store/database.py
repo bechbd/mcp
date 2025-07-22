@@ -84,18 +84,6 @@ class NeptuneDatabase(NeptuneGraph):
                 'profile name are valid.'
             ) from e
 
-        try:
-            self.get_lpg_schema()
-            self.get_rdf_schema()
-        except Exception as e:
-            logger.exception('Could not get schema for Neptune database')
-            raise NeptuneException(
-                {
-                    'message': 'Could not get schema for Neptune database',
-                    'detail': str(e),
-                }
-            )
-
     def _get_summary(self) -> Dict:
         """Retrieves the graph summary from Neptune's property graph summary API.
 
