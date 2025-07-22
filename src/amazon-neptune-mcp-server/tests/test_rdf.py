@@ -505,3 +505,337 @@ class TestRDFFunctionality:
             rel = schema.rels[0]
             assert rel.uri == 'http://example.org/knows'
             assert rel.local == 'knows'
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_with_ontology(self, mock_session):
+        """Test retrieval of RDF schema with ontology information.
+
+        This test verifies that:
+        1. The get_rdf_schema method correctly processes ontology information
+        2. The ontology items are correctly added to the schema
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the RDF graph summary response
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {
+                'graphSummary': {
+                    'classes': ['http://example.org/ontology#Person'],
+                    'predicates': [{'http://example.org/ontology#name': 100}],
+                }
+            }
+        }
+
+        # Mock _query_sparql to return ontology information
+        sparql_result = {
+            'results': {
+                'bindings': [
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Ontology'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Example Ontology'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'An example ontology for testing'},
+                    },
+                ]
+            }
+        }
+
+        # Create the database instance with mocked methods
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(NeptuneDatabase, '_query_sparql', return_value=sparql_result),
+        ):
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Ensure rdf_schema is None
+            db.rdf_schema = None
+
+            # Act
+            result = db.get_rdf_schema()
+
+            # Assert
+            assert isinstance(result, RDFGraphSchema)
+            assert len(result.ontologies) == 1
+            assert result.ontologies[0].uri == 'http://example.org/ontology'
+            assert result.ontologies[0].label == 'Example Ontology'
+            assert result.ontologies[0].comment == 'An example ontology for testing'
+            assert result.rdfclasses == ['http://example.org/ontology#Person']
+            assert result.predicates == ['http://example.org/ontology#name']
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_with_classes(self, mock_session):
+        """Test retrieval of RDF schema with class information.
+
+        This test verifies that:
+        1. The get_rdf_schema method correctly processes class information
+        2. The class items are correctly added to the schema
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the RDF graph summary response
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {
+                'graphSummary': {
+                    'classes': ['http://example.org/ontology#Person'],
+                    'predicates': [{'http://example.org/ontology#name': 100}],
+                }
+            }
+        }
+
+        # Mock _query_sparql to return class information
+        sparql_result = {
+            'results': {
+                'bindings': [
+                    {
+                        's': {'value': 'http://example.org/ontology#Person'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#Class'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subClassOf'},
+                        'o': {'value': 'http://example.org/ontology#Agent'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Person'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#Person'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'A person in the system'},
+                    },
+                ]
+            }
+        }
+
+        # Create the database instance with mocked methods
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(NeptuneDatabase, '_query_sparql', return_value=sparql_result),
+        ):
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Ensure rdf_schema is None
+            db.rdf_schema = None
+
+            # Act
+            result = db.get_rdf_schema()
+
+            # Assert
+            assert isinstance(result, RDFGraphSchema)
+            assert len(result.classes) == 1
+            assert result.classes[0].uri == 'http://example.org/ontology#Person'
+            assert result.classes[0].local == 'Person'
+            assert result.classes[0].parent_uri == 'http://example.org/ontology#Agent'
+            assert result.classes[0].label == 'Person'
+            assert result.classes[0].comment == 'A person in the system'
+            assert result.rdfclasses == ['http://example.org/ontology#Person']
+            assert result.predicates == ['http://example.org/ontology#name']
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_with_datatype_properties(self, mock_session):
+        """Test retrieval of RDF schema with datatype property information.
+
+        This test verifies that:
+        1. The get_rdf_schema method correctly processes datatype property information
+        2. The datatype property items are correctly added to the schema
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the RDF graph summary response
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {
+                'graphSummary': {
+                    'classes': ['http://example.org/ontology#Person'],
+                    'predicates': [{'http://example.org/ontology#name': 100}],
+                }
+            }
+        }
+
+        # Mock _query_sparql to return datatype property information
+        sparql_result = {
+            'results': {
+                'bindings': [
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#DatatypeProperty'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf'},
+                        'o': {'value': 'http://example.org/ontology#label'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
+                        'o': {'value': 'http://example.org/ontology#Person'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
+                        'o': {'value': 'http://www.w3.org/2001/XMLSchema#string'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Name'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#name'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'The name of a person'},
+                    },
+                ]
+            }
+        }
+
+        # Create the database instance with mocked methods
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(NeptuneDatabase, '_query_sparql', return_value=sparql_result),
+        ):
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Ensure rdf_schema is None
+            db.rdf_schema = None
+
+            # Act
+            result = db.get_rdf_schema()
+
+            # Assert
+            assert isinstance(result, RDFGraphSchema)
+            assert len(result.dtprops) == 1
+            assert result.dtprops[0].uri == 'http://example.org/ontology#name'
+            assert result.dtprops[0].local == 'name'
+            assert result.dtprops[0].parent_uri == 'http://example.org/ontology#label'
+            assert result.dtprops[0].domain_uri == 'http://example.org/ontology#Person'
+            assert result.dtprops[0].range_uri == 'http://www.w3.org/2001/XMLSchema#string'
+            assert result.dtprops[0].label == 'Name'
+            assert result.dtprops[0].comment == 'The name of a person'
+            assert result.rdfclasses == ['http://example.org/ontology#Person']
+            assert result.predicates == ['http://example.org/ontology#name']
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_with_object_properties(self, mock_session):
+        """Test retrieval of RDF schema with object property information.
+
+        This test verifies that:
+        1. The get_rdf_schema method correctly processes object property information
+        2. The object property items are correctly added to the schema
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock the RDF graph summary response
+        mock_client.get_rdf_graph_summary.return_value = {
+            'payload': {
+                'graphSummary': {
+                    'classes': [
+                        'http://example.org/ontology#Person',
+                        'http://example.org/ontology#Organization',
+                    ],
+                    'predicates': [{'http://example.org/ontology#worksFor': 100}],
+                }
+            }
+        }
+
+        # Mock _query_sparql to return object property information
+        sparql_result = {
+            'results': {
+                'bindings': [
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'},
+                        'o': {'value': 'http://www.w3.org/2002/07/owl#ObjectProperty'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf'},
+                        'o': {'value': 'http://example.org/ontology#affiliatedWith'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#domain'},
+                        'o': {'value': 'http://example.org/ontology#Person'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#range'},
+                        'o': {'value': 'http://example.org/ontology#Organization'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#label'},
+                        'o': {'value': 'Works For'},
+                    },
+                    {
+                        's': {'value': 'http://example.org/ontology#worksFor'},
+                        'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
+                        'o': {'value': 'Indicates that a person works for an organization'},
+                    },
+                ]
+            }
+        }
+
+        # Create the database instance with mocked methods
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(NeptuneDatabase, '_query_sparql', return_value=sparql_result),
+        ):
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Ensure rdf_schema is None
+            db.rdf_schema = None
+
+            # Act
+            result = db.get_rdf_schema()
+
+            # Assert
+            assert isinstance(result, RDFGraphSchema)
+            assert len(result.oprops) == 1
+            assert result.oprops[0].uri == 'http://example.org/ontology#worksFor'
+            assert result.oprops[0].local == 'worksFor'
+            assert result.oprops[0].parent_uri == 'http://example.org/ontology#affiliatedWith'
+            assert result.oprops[0].domain_uri == 'http://example.org/ontology#Person'
+            assert result.oprops[0].range_uri == 'http://example.org/ontology#Organization'
+            assert result.oprops[0].label == 'Works For'
+            assert result.oprops[0].comment == 'Indicates that a person works for an organization'
+            assert len(result.rels) == 1
+            assert result.rels[0].uri == 'http://example.org/ontology#worksFor'
+            assert result.rels[0].local == 'worksFor'
+            assert result.rdfclasses == [
+                'http://example.org/ontology#Person',
+                'http://example.org/ontology#Organization',
+            ]
+            assert result.predicates == ['http://example.org/ontology#worksFor']

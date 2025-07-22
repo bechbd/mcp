@@ -18,7 +18,14 @@ import pytest
 import requests
 from awslabs.amazon_neptune_mcp_server.exceptions import NeptuneException
 from awslabs.amazon_neptune_mcp_server.graph_store.database import NeptuneDatabase
-from awslabs.amazon_neptune_mcp_server.models import GraphSchema, RDFGraphSchema
+from awslabs.amazon_neptune_mcp_server.models import (
+    GraphSchema,
+    Node,
+    Property,
+    RDFGraphSchema,
+    Relationship,
+    RelationshipPattern,
+)
 from unittest.mock import MagicMock, patch
 
 
@@ -1495,3 +1502,391 @@ class TestNeptuneDatabase:
             assert result[0].type == 'KNOWS'
             assert result[0].properties == []
             db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_refresh_lpg_schema(self, mock_session):
+        """Test the _refresh_lpg_schema method.
+
+        This test verifies that:
+        1. The _get_labels method is called to get node and edge labels
+        2. The _get_triples method is called with the edge labels
+        3. The _get_node_properties method is called with the node labels
+        4. The _get_edge_properties method is called with the edge labels
+        5. A GraphSchema is created with the correct components
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Create the database instance with mocked methods
+        with patch.object(
+            NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+        ):
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock the methods called by _refresh_lpg_schema
+            n_labels = ['Person', 'Movie']
+            e_labels = ['ACTED_IN', 'DIRECTED']
+
+            triple_schema = [
+                RelationshipPattern(left_node='Person', right_node='Movie', relation='ACTED_IN'),
+                RelationshipPattern(left_node='Person', right_node='Movie', relation='DIRECTED'),
+            ]
+
+            nodes = [
+                Node(
+                    labels='Person',
+                    properties=[
+                        Property(name='name', type=['STRING']),
+                        Property(name='age', type=['INTEGER']),
+                    ],
+                ),
+                Node(
+                    labels='Movie',
+                    properties=[
+                        Property(name='title', type=['STRING']),
+                        Property(name='year', type=['INTEGER']),
+                    ],
+                ),
+            ]
+
+            edges = [
+                Relationship(type='ACTED_IN', properties=[Property(name='role', type=['STRING'])]),
+                Relationship(type='DIRECTED', properties=[]),
+            ]
+
+            # Mock the methods that _refresh_lpg_schema calls
+            db._get_labels = MagicMock(return_value=(n_labels, e_labels))
+            db._get_triples = MagicMock(return_value=triple_schema)
+            db._get_node_properties = MagicMock(return_value=nodes)
+            db._get_edge_properties = MagicMock(return_value=edges)
+
+            # Act
+            result = db._refresh_lpg_schema()
+
+            # Assert
+            db._get_labels.assert_called_once()
+            db._get_triples.assert_called_once_with(e_labels)
+            db._get_node_properties.assert_called_once()
+            db._get_edge_properties.assert_called_once()
+
+            assert result.nodes == nodes
+            assert result.relationships == edges
+            assert result.relationship_patterns == triple_schema
+            assert db.schema == result
+
+    @patch('boto3.Session')
+    async def test_get_local_name_with_multiple_hashes(self, mock_session):
+        """Test extraction of local name from IRI with multiple hashes.
+
+        This test verifies that:
+        1. The _get_local_name method correctly handles IRIs with multiple hashes
+        2. The prefix includes everything up to the first hash
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Act
+            iri = 'http://example.org/ontology#Person#Detail'
+            prefix, local = db._get_local_name(iri)
+
+            # Assert
+            assert prefix == 'http://example.org/ontology#'
+            assert local == 'Person'  # The method splits on the first hash
+
+    @patch('boto3.Session')
+    async def test_get_local_name_with_hash_and_slash(self, mock_session):
+        """Test extraction of local name from IRI with both hash and slash.
+
+        This test verifies that:
+        1. The _get_local_name method prioritizes hash over slash when both are present
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Act
+            iri = 'http://example.org/ontology/path#Person'
+            prefix, local = db._get_local_name(iri)
+
+            # Assert
+            assert prefix == 'http://example.org/ontology/path#'
+            assert local == 'Person'
+
+    @patch('boto3.Session')
+    async def test_get_rdf_schema_empty(self, mock_session):
+        """Test that get_rdf_schema returns an empty schema when not cached.
+
+        This test verifies that:
+        1. When rdf_schema is not cached, a new empty schema is returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Ensure rdf_schema is None
+            db.rdf_schema = None
+
+            # Act
+            result = db.get_rdf_schema()
+
+            # Assert
+            assert isinstance(result, RDFGraphSchema)
+            assert result.distinct_prefixes == {}
+            assert result.classes == []
+            assert result.rels == []
+            assert result.dtprops == []
+            assert result.oprops == []
+            assert result.rdfclasses == []
+            assert result.predicates == []
+
+    @patch('boto3.Session')
+    async def test_get_triples_empty(self, mock_session):
+        """Test retrieval of relationship patterns with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, an empty list is returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Act
+            result = db._get_triples(['KNOWS'])
+
+            # Assert
+            assert result == []
+            db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_node_properties_empty(self, mock_session):
+        """Test retrieval of node properties with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, nodes with empty properties are returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Define type mapping
+            types = {'str': 'STRING', 'int': 'INTEGER'}
+
+            # Act
+            result = db._get_node_properties(['Person'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].labels == 'Person'
+            assert result[0].properties == []
+            db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_edge_properties_empty(self, mock_session):
+        """Test retrieval of edge properties with empty query results.
+
+        This test verifies that:
+        1. When the query returns no results, edges with empty properties are returned
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return empty results
+            db.query_opencypher = MagicMock(return_value=[])
+
+            # Define type mapping
+            types = {'str': 'STRING', 'int': 'INTEGER'}
+
+            # Act
+            result = db._get_edge_properties(['KNOWS'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].type == 'KNOWS'
+            assert result[0].properties == []
+            db.query_opencypher.assert_called_once()
+
+    @patch('boto3.Session')
+    async def test_get_node_properties_with_mixed_types(self, mock_session):
+        """Test retrieval of node properties with mixed property types.
+
+        This test verifies that:
+        1. When a property has multiple types across different nodes, all types are captured
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return results with mixed types
+            db.query_opencypher = MagicMock(
+                return_value=[
+                    {'props': {'age': 30}},  # Integer
+                    {'props': {'age': 25.5}},  # Float
+                ]
+            )
+
+            # Define type mapping
+            types = {'str': 'STRING', 'int': 'INTEGER', 'float': 'DOUBLE'}
+
+            # Act
+            result = db._get_node_properties(['Person'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].labels == 'Person'
+            assert len(result[0].properties) == 1
+
+            # Check that both INTEGER and DOUBLE types are captured for the 'age' property
+            age_prop = result[0].properties[0]
+            assert age_prop.name == 'age'
+            assert set(age_prop.type) == {'INTEGER', 'DOUBLE'}
+
+    @patch('boto3.Session')
+    async def test_get_edge_properties_with_mixed_types(self, mock_session):
+        """Test retrieval of edge properties with mixed property types.
+
+        This test verifies that:
+        1. When a property has multiple types across different edges, all types are captured
+        """
+        # Arrange
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
+
+        # Mock _refresh_lpg_schema to avoid actual API calls during init
+        with (
+            patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
+            patch.object(
+                NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}
+            ),
+        ):
+            # Create the database instance
+            db = NeptuneDatabase(host='test-endpoint')
+
+            # Mock query_opencypher to return results with mixed types
+            db.query_opencypher = MagicMock(
+                return_value=[
+                    {'props': {'weight': 0.5}},  # Float
+                    {'props': {'weight': True}},  # Boolean
+                ]
+            )
+
+            # Define type mapping
+            types = {'float': 'DOUBLE', 'bool': 'BOOLEAN'}
+
+            # Act
+            result = db._get_edge_properties(['KNOWS'], types)
+
+            # Assert
+            assert len(result) == 1
+            assert result[0].type == 'KNOWS'
+            assert len(result[0].properties) == 1
+
+            # Check that both DOUBLE and BOOLEAN types are captured for the 'weight' property
+            weight_prop = result[0].properties[0]
+            assert weight_prop.name == 'weight'
+            assert set(weight_prop.type) == {'DOUBLE', 'BOOLEAN'}

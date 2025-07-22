@@ -32,7 +32,7 @@ class NeptuneGraph(ABC):
         Returns:
             PropertyGraphSchema: Complete schema information for the graph
         """
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def get_rdf_schema(self) -> RDFGraphSchema:
@@ -41,7 +41,7 @@ class NeptuneGraph(ABC):
         Returns:
             RDFGraphSchema: Complete schema information for the graph
         """
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def query_opencypher(self, query: str, params: Optional[dict] = None) -> dict:
@@ -54,7 +54,7 @@ class NeptuneGraph(ABC):
         Returns:
             dict: The query results
         """
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def query_gremlin(self, query: str) -> dict:
@@ -66,7 +66,7 @@ class NeptuneGraph(ABC):
         Returns:
             dict: The query results
         """
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def query_sparql(self, query: str) -> dict:
@@ -78,4 +78,4 @@ class NeptuneGraph(ABC):
         Returns:
             dict: The query results
         """
-        raise NotImplementedError()
+        pass
