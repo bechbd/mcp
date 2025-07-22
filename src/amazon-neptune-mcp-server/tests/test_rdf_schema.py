@@ -15,7 +15,6 @@
 
 import pytest
 from awslabs.amazon_neptune_mcp_server.graph_store.database import NeptuneDatabase
-from awslabs.amazon_neptune_mcp_server.models import RDFGraphSchema
 from unittest.mock import MagicMock, patch
 
 
@@ -26,7 +25,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_empty_response(self, mock_session):
         """Test get_rdf_schema with empty response.
-        
+
         This test verifies that:
         1. When the API returns an empty response, a valid empty schema is created
         2. The schema is stored in the instance and returned
@@ -53,13 +52,13 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called_once()
             assert schema.rdfclasses == []
@@ -69,14 +68,14 @@ class TestRDFSchema:
             assert schema.dtprops == []
             assert schema.oprops == []
             assert schema.rels == []
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
 
     @patch('boto3.Session')
     async def test_get_rdf_schema_with_classes_only(self, mock_session):
         """Test get_rdf_schema with classes but no properties.
-        
+
         This test verifies that:
         1. When the API returns classes but no properties, they are correctly processed
         2. The schema is stored in the instance and returned
@@ -122,29 +121,29 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements
             assert len(schema.rdfclasses) == 2
             assert schema.rdfclasses == ['http://example.org/Person', 'http://example.org/Movie']
             assert len(schema.predicates) == 0
             assert len(schema.classes) == 1
-            
+
             # Check class details
             cls = schema.classes[0]
             assert cls.uri == 'http://example.org/Person'
@@ -154,7 +153,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_with_predicates_only(self, mock_session):
         """Test get_rdf_schema with predicates but no classes.
-        
+
         This test verifies that:
         1. When the API returns predicates but no classes, they are correctly processed
         2. The schema is stored in the instance and returned
@@ -203,29 +202,29 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements
             assert len(schema.rdfclasses) == 0
             assert len(schema.predicates) == 2
             assert schema.predicates == ['http://example.org/name', 'http://example.org/age']
             assert len(schema.dtprops) == 1
-            
+
             # Check property details
             dt_prop = schema.dtprops[0]
             assert dt_prop.uri == 'http://example.org/name'
@@ -235,7 +234,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_invalid_iri(self, mock_session):
         """Test get_rdf_schema with invalid IRI.
-        
+
         This test verifies that:
         1. When an invalid IRI is encountered, it's skipped without causing the entire process to fail
         2. Valid IRIs are still processed correctly
@@ -282,27 +281,27 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called_once()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements - should only have the valid class
             assert len(schema.rdfclasses) == 2  # Both are in rdfclasses from the summary
             assert len(schema.classes) == 1  # Only the valid one is processed into classes
-            
+
             # Check class details
             cls = schema.classes[0]
             assert cls.uri == 'http://example.org/Person'
@@ -310,7 +309,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_with_ontology(self, mock_session):
         """Test get_rdf_schema with ontology data.
-        
+
         This test verifies that:
         1. Ontology data is correctly processed
         2. The schema is stored in the instance and returned
@@ -361,26 +360,26 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called ()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements
             assert len(schema.ontologies) == 1
-            
+
             # Check ontology details
             ontology = schema.ontologies[0]
             assert ontology.uri == 'http://example.org/ontology'
@@ -390,7 +389,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_with_object_property(self, mock_session):
         """Test get_rdf_schema with object property data.
-        
+
         This test verifies that:
         1. Object property data is correctly processed
         2. The schema is stored in the instance and returned
@@ -446,28 +445,28 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements
             assert len(schema.predicates) == 1
             assert len(schema.oprops) == 1
             assert len(schema.rels) == 1
-            
+
             # Check object property details
             obj_prop = schema.oprops[0]
             assert obj_prop.uri == 'http://example.org/knows'
@@ -475,7 +474,7 @@ class TestRDFSchema:
             assert obj_prop.parent_uri == 'http://example.org/related'
             assert obj_prop.domain_uri == 'http://example.org/Person'
             assert obj_prop.range_uri == 'http://example.org/Person'
-            
+
             # Check relationship details
             rel = schema.rels[0]
             assert rel.uri == 'http://example.org/knows'
@@ -484,7 +483,7 @@ class TestRDFSchema:
     @patch('boto3.Session')
     async def test_get_rdf_schema_with_no_results(self, mock_session):
         """Test get_rdf_schema when SPARQL query returns no results.
-        
+
         This test verifies that:
         1. When the SPARQL query returns no results, the schema is still created with summary data
         2. The schema is stored in the instance and returned
@@ -514,29 +513,29 @@ class TestRDFSchema:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements - should still have the summary data
             assert len(schema.rdfclasses) == 1
             assert schema.rdfclasses == ['http://example.org/Person']
             assert len(schema.predicates) == 1
             assert schema.predicates == ['http://example.org/name']
-            
+
             # But no processed data
             assert len(schema.classes) == 0
             assert len(schema.dtprops) == 0

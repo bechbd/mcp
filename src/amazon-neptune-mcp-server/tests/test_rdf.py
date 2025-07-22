@@ -306,7 +306,7 @@ class TestRDFFunctionality:
     @patch('boto3.Session')
     async def test_get_rdf_schema_processing(self, mock_session):
         """Test processing of RDF schema data.
-        
+
         This test verifies that:
         1. The get_rdf_graph_summary API is called
         2. The SPARQL query is executed to get ontology, classes, and properties
@@ -352,7 +352,7 @@ class TestRDFFunctionality:
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
                         'o': {'value': 'An example ontology for testing'}
                     },
-                    
+
                     # Class
                     {
                         's': {'value': 'http://example.org/Person'},
@@ -374,7 +374,7 @@ class TestRDFFunctionality:
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
                         'o': {'value': 'A person'}
                     },
-                    
+
                     # Datatype Property
                     {
                         's': {'value': 'http://example.org/name'},
@@ -401,7 +401,7 @@ class TestRDFFunctionality:
                         'p': {'value': 'http://www.w3.org/2000/01/rdf-schema#comment'},
                         'o': {'value': 'The name of a person'}
                     },
-                    
+
                     # Object Property
                     {
                         's': {'value': 'http://example.org/knows'},
@@ -442,23 +442,23 @@ class TestRDFFunctionality:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Reset the rdf_schema to None to force refresh
             db.rdf_schema = None
-            
+
             # Mock _query_sparql to return the test data
             db._query_sparql = MagicMock(return_value=mock_sparql_response)
-            
+
             # Act
             schema = db.get_rdf_schema()
-            
+
             # Assert
             mock_client.get_rdf_graph_summary.assert_called()
             db._query_sparql.assert_called_once()
-            
+
             # Check that the schema was stored in the instance
             assert db.rdf_schema == schema
-            
+
             # Check the schema elements
             assert len(schema.rdfclasses) == 2
             assert len(schema.predicates) == 2
@@ -467,13 +467,13 @@ class TestRDFFunctionality:
             assert len(schema.dtprops) == 1
             assert len(schema.oprops) == 1
             assert len(schema.rels) == 1
-            
+
             # Check ontology details
             ontology = schema.ontologies[0]
             assert ontology.uri == 'http://example.org/ontology'
             assert ontology.label == 'Example Ontology'
             assert ontology.comment == 'An example ontology for testing'
-            
+
             # Check class details
             cls = schema.classes[0]
             assert cls.uri == 'http://example.org/Person'
@@ -481,7 +481,7 @@ class TestRDFFunctionality:
             assert cls.parent_uri == 'http://example.org/Agent'
             assert cls.label == 'Person'
             assert cls.comment == 'A person'
-            
+
             # Check datatype property details
             dt_prop = schema.dtprops[0]
             assert dt_prop.uri == 'http://example.org/name'
@@ -490,7 +490,7 @@ class TestRDFFunctionality:
             assert dt_prop.range_uri == 'http://www.w3.org/2001/XMLSchema#string'
             assert dt_prop.label == 'name'
             assert dt_prop.comment == 'The name of a person'
-            
+
             # Check object property details
             obj_prop = schema.oprops[0]
             assert obj_prop.uri == 'http://example.org/knows'
@@ -500,7 +500,7 @@ class TestRDFFunctionality:
             assert obj_prop.range_uri == 'http://example.org/Person'
             assert obj_prop.label == 'knows'
             assert obj_prop.comment == 'A person knows another person'
-            
+
             # Check relationship details
             rel = schema.rels[0]
             assert rel.uri == 'http://example.org/knows'

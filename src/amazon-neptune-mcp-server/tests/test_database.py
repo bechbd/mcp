@@ -581,7 +581,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_triples(self, mock_session):
         """Test retrieval of relationship patterns (triples).
-        
+
         This test verifies that:
         1. The query_opencypher method is called for each edge label
         2. The relationship patterns are correctly created from the query results
@@ -598,7 +598,7 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Mock query_opencypher to return test data
             db.query_opencypher = MagicMock()
             db.query_opencypher.side_effect = [
@@ -611,19 +611,19 @@ class TestNeptuneDatabase:
                     {'from': ['Director'], 'edge': 'ACTED_IN', 'to': ['Movie']}
                 ]
             ]
-            
+
             # Act
             result = db._get_triples(['KNOWS', 'ACTED_IN'])
-            
+
             # Assert
             assert len(result) == 4
             assert db.query_opencypher.call_count == 2
-            
+
             # Check the first relationship pattern
             assert result[0].left_node == 'Person'
             assert result[0].relation == 'KNOWS'
             assert result[0].right_node == 'Person'
-            
+
             # Check the third relationship pattern
             assert result[2].left_node == 'Person'
             assert result[2].relation == 'ACTED_IN'
@@ -632,7 +632,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_node_properties(self, mock_session):
         """Test retrieval of node properties.
-        
+
         This test verifies that:
         1. The query_opencypher method is called for each node label
         2. The node properties are correctly extracted from the query results
@@ -650,7 +650,7 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Mock query_opencypher to return test data
             db.query_opencypher = MagicMock()
             db.query_opencypher.side_effect = [
@@ -663,7 +663,7 @@ class TestNeptuneDatabase:
                     {'props': {'title': 'Inception', 'year': 2010}}
                 ]
             ]
-            
+
             # Define type mapping
             types = {
                 'str': 'STRING',
@@ -671,31 +671,31 @@ class TestNeptuneDatabase:
                 'float': 'DOUBLE',
                 'bool': 'BOOLEAN'
             }
-            
+
             # Act
             result = db._get_node_properties(['Person', 'Movie'], types)
-            
+
             # Assert
             assert len(result) == 2
             assert db.query_opencypher.call_count == 2
-            
+
             # Check the Person node
             person_node = result[0]
             assert person_node.labels == 'Person'
             assert len(person_node.properties) == 4
-            
+
             # Check property types
             prop_types = {p.name: p.type for p in person_node.properties}
             assert 'STRING' in prop_types['name']
             assert 'INTEGER' in prop_types['age']
             assert 'BOOLEAN' in prop_types['active']
             assert 'DOUBLE' in prop_types['score']
-            
+
             # Check the Movie node
             movie_node = result[1]
             assert movie_node.labels == 'Movie'
             assert len(movie_node.properties) == 2
-            
+
             # Check property types
             prop_types = {p.name: p.type for p in movie_node.properties}
             assert 'STRING' in prop_types['title']
@@ -704,7 +704,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_edge_properties(self, mock_session):
         """Test retrieval of edge properties.
-        
+
         This test verifies that:
         1. The query_opencypher method is called for each edge label
         2. The edge properties are correctly extracted from the query results
@@ -722,7 +722,7 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Mock query_opencypher to return test data
             db.query_opencypher = MagicMock()
             db.query_opencypher.side_effect = [
@@ -735,36 +735,36 @@ class TestNeptuneDatabase:
                     {'props': {'role': 'Trinity', 'screenTime': 90}}
                 ]
             ]
-            
+
             # Define type mapping
             types = {
                 'str': 'STRING',
                 'int': 'INTEGER',
                 'float': 'DOUBLE'
             }
-            
+
             # Act
             result = db._get_edge_properties(['KNOWS', 'ACTED_IN'], types)
-            
+
             # Assert
             assert len(result) == 2
             assert db.query_opencypher.call_count == 2
-            
+
             # Check the KNOWS relationship
             knows_rel = result[0]
             assert knows_rel.type == 'KNOWS'
             assert len(knows_rel.properties) == 2
-            
+
             # Check property types
             prop_types = {p.name: p.type for p in knows_rel.properties}
             assert 'STRING' in prop_types['since']
             assert 'DOUBLE' in prop_types['strength']
-            
+
             # Check the ACTED_IN relationship
             acted_in_rel = result[1]
             assert acted_in_rel.type == 'ACTED_IN'
             assert len(acted_in_rel.properties) == 2
-            
+
             # Check property types
             prop_types = {p.name: p.type for p in acted_in_rel.properties}
             assert 'STRING' in prop_types['role']
@@ -774,7 +774,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_propertygraph_schema(self, mock_session):
         """Test that propertygraph_schema calls get_lpg_schema.
-        
+
         This test verifies that:
         1. The propertygraph_schema method calls get_lpg_schema
         2. The result from get_lpg_schema is returned unchanged
@@ -791,16 +791,16 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Create a mock schema
             mock_schema = GraphSchema(nodes=[], relationships=[], relationship_patterns=[])
-            
+
             # Mock get_lpg_schema
             db.get_lpg_schema = MagicMock(return_value=mock_schema)
-            
+
             # Act
             result = db.propertygraph_schema()
-            
+
             # Assert
             db.get_lpg_schema.assert_called_once()
             assert result == mock_schema
@@ -808,7 +808,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_query_sparql(self, mock_session):
         """Test execution of SPARQL queries.
-        
+
         This test verifies that:
         1. The _query_sparql method is called with the correct query
         2. The result is returned unchanged
@@ -825,15 +825,15 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Mock _query_sparql
             mock_result = {'results': {'bindings': [{'s': {'value': 'http://example.org/subject'}}]}}
             db._query_sparql = MagicMock(return_value=mock_result)
-            
+
             # Act
             query = 'SELECT * WHERE { ?s ?p ?o } LIMIT 1'
             result = db.query_sparql(query)
-            
+
             # Assert
             db._query_sparql.assert_called_once_with(query)
             assert result == mock_result
@@ -841,7 +841,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_local_name_with_hash(self, mock_session):
         """Test extraction of local name from IRI with hash.
-        
+
         This test verifies that:
         1. The _get_local_name method correctly splits IRIs with hash
         2. The prefix and local name are correctly returned
@@ -858,11 +858,11 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Act
             iri = 'http://example.org/ontology#Person'
             prefix, local = db._get_local_name(iri)
-            
+
             # Assert
             assert prefix == 'http://example.org/ontology#'
             assert local == 'Person'
@@ -870,7 +870,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_local_name_with_slash(self, mock_session):
         """Test extraction of local name from IRI with slash.
-        
+
         This test verifies that:
         1. The _get_local_name method correctly splits IRIs with slash
         2. The prefix and local name are correctly returned
@@ -887,11 +887,11 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Act
             iri = 'http://example.org/ontology/Person'
             prefix, local = db._get_local_name(iri)
-            
+
             # Assert
             assert prefix == 'http://example.org/ontology/'
             assert local == 'Person'
@@ -899,7 +899,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_local_name_invalid(self, mock_session):
         """Test extraction of local name from invalid IRI.
-        
+
         This test verifies that:
         1. The _get_local_name method raises ValueError for IRIs without hash or slash
         2. The error message correctly indicates the issue
@@ -916,7 +916,7 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Act & Assert
             with pytest.raises(ValueError, match="Unexpected IRI 'invalid-iri', contains neither '#' nor '/'"):
                 db._get_local_name('invalid-iri')
@@ -924,7 +924,7 @@ class TestNeptuneDatabase:
     @patch('boto3.Session')
     async def test_get_rdf_schema_cached(self, mock_session):
         """Test that get_rdf_schema returns cached schema when available.
-        
+
         This test verifies that:
         1. When rdf_schema is already cached, it is returned without making API calls
         2. The cached schema is returned unchanged
@@ -941,19 +941,19 @@ class TestNeptuneDatabase:
              patch.object(NeptuneDatabase, '_query_sparql', return_value={'results': {'bindings': []}}):
             # Create the database instance
             db = NeptuneDatabase(host='test-endpoint')
-            
+
             # Create a mock RDF schema
             mock_rdf_schema = RDFGraphSchema(distinct_prefixes={})
-            
+
             # Set the cached schema
             db.rdf_schema = mock_rdf_schema
-            
+
             # Reset the mocks to verify they're not called
             mock_client.get_rdf_graph_summary.reset_mock()
-            
+
             # Act
             result = db.get_rdf_schema()
-            
+
             # Assert
             assert result == mock_rdf_schema
             mock_client.get_rdf_graph_summary.assert_not_called()

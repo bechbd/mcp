@@ -386,8 +386,7 @@ class TestNeptuneAnalytics:
 
     @patch('boto3.Session')
     async def test_query_rdf_not_supported(self, mock_session):
-        """Test that RDF queries are not supported.
-        """
+        """Test that RDF queries are not supported."""
         # Arrange
         mock_session_instance = MagicMock()
         mock_client = MagicMock()
@@ -408,8 +407,7 @@ class TestNeptuneAnalytics:
 
     @patch('boto3.Session')
     async def test_query_rdf_schema_supported(self, mock_session):
-        """Test that RDF schama are not supported.
-        """
+        """Test that RDF schama are not supported."""
         # Arrange
         mock_session_instance = MagicMock()
         mock_client = MagicMock()
@@ -431,7 +429,7 @@ class TestNeptuneAnalytics:
     @patch('boto3.Session')
     async def test_get_lpg_schema_empty_schema(self, mock_session):
         """Test that get_lpg_schema returns empty schema when schema is None.
-        
+
         This test verifies that:
         1. When schema is None and _refresh_schema returns None, an empty schema is returned
         2. The empty schema has the expected structure
@@ -446,16 +444,16 @@ class TestNeptuneAnalytics:
         with patch.object(NeptuneAnalytics, '_refresh_schema', return_value=None):
             # Create the analytics instance
             analytics = NeptuneAnalytics(graph_identifier='test-graph-id')
-            
+
             # Set schema to None to force refresh
             analytics.schema = None
-            
+
             # Reset the mock to verify it's called again
             NeptuneAnalytics._refresh_schema.reset_mock()
-            
+
             # Act
             result = analytics.get_lpg_schema()
-            
+
             # Assert
             NeptuneAnalytics._refresh_schema.assert_called_once()
             assert isinstance(result, GraphSchema)
@@ -466,7 +464,7 @@ class TestNeptuneAnalytics:
     @patch('boto3.Session')
     async def test_propertygraph_schema(self, mock_session):
         """Test that propertygraph_schema calls get_lpg_schema.
-        
+
         This test verifies that:
         1. The propertygraph_schema method calls get_lpg_schema
         2. The result from get_lpg_schema is returned unchanged
@@ -484,13 +482,13 @@ class TestNeptuneAnalytics:
         with patch.object(NeptuneAnalytics, '_refresh_schema', return_value=mock_schema):
             # Create the analytics instance
             analytics = NeptuneAnalytics(graph_identifier='test-graph-id')
-            
+
             # Mock get_lpg_schema
             analytics.get_lpg_schema = MagicMock(return_value=mock_schema)
-            
+
             # Act
             result = analytics.propertygraph_schema()
-            
+
             # Assert
             analytics.get_lpg_schema.assert_called_once()
             assert result == mock_schema
@@ -498,7 +496,7 @@ class TestNeptuneAnalytics:
     @patch('boto3.Session')
     async def test_refresh_schema_empty_response(self, mock_session):
         """Test schema refresh with empty response.
-        
+
         This test verifies that:
         1. When the API returns an empty response, a valid empty schema is created
         2. The schema is stored in the instance and returned
@@ -511,7 +509,7 @@ class TestNeptuneAnalytics:
 
         # Create the analytics instance with mocked _refresh_schema
         with patch.object(NeptuneAnalytics, '_refresh_schema'):
-            analytics = NeptuneAnalytics(graph_identifier='test-graph-id')
+            NeptuneAnalytics(graph_identifier='test-graph-id')
 
         # Create a new instance for testing the actual method
         analytics2 = NeptuneAnalytics.__new__(NeptuneAnalytics)
@@ -543,7 +541,7 @@ class TestNeptuneAnalytics:
     @patch('boto3.Session')
     async def test_query_opencypher_empty_params(self, mock_session):
         """Test execution of openCypher queries with empty parameters.
-        
+
         This test verifies that:
         1. When params is an empty dict, it's passed correctly to the API
         2. The result is correctly extracted from the response

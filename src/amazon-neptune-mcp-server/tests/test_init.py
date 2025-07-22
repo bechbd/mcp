@@ -13,9 +13,10 @@
 # limitations under the License.
 """Tests for the awslabs.amazon-neptune-mcp-server package."""
 
+import awslabs.amazon_neptune_mcp_server
 import importlib
 import re
-import awslabs.amazon_neptune_mcp_server
+
 
 class TestInit:
     """Tests for the __init__.py module."""
