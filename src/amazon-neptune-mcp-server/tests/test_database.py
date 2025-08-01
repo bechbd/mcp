@@ -819,7 +819,7 @@ class TestNeptuneDatabase:
             assert result == mock_schema
 
     @patch('boto3.Session')
-    async def test_query_sparql(self, mock_session):
+    async def test_query_sparql_mock(self, mock_session):
         """Test execution of SPARQL queries.
 
         This test verifies that:
@@ -1890,3 +1890,57 @@ class TestNeptuneDatabase:
             weight_prop = result[0].properties[0]
             assert weight_prop.name == 'weight'
             assert set(weight_prop.type) == {'DOUBLE', 'BOOLEAN'}
+
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
+    def test_query_sparql(self, mock_sigv4_auth, mock_requests):
+        """Test SPARQL select queries."""
+        # Setup
+        mock_session = MagicMock()
+        mock_session.get_credentials.return_value = MagicMock()
+        mock_session.region_name = 'us-east-1'
+
+        db = NeptuneDatabase('https://test-endpoint.amazonaws.com:8182', mock_session)
+
+        # Mock response
+        expected_response = {'results': {'bindings': []}}
+        mock_response = MagicMock()
+        mock_response.text = json.dumps(expected_response)
+        mock_requests.return_value = mock_response
+
+        # Execute
+        query = 'SELECT * WHERE { ?s ?p ?o }'
+        result = db._query_sparql(query)
+
+        # Verify
+        assert result == expected_response
+        mock_requests.assert_called_once_with(
+            method='POST',
+            url='https://test-endpoint.amazonaws.com:8182/sparql',
+            headers=mock_sigv4_auth.return_value.add_auth.return_value,
+            data=f'query={query}',
+        )
+
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
+    def test_query_sparql_update(self, mock_sigv4_auth, mock_requests):
+        """Test SPARQL update queries."""
+        # Setup
+        mock_session = MagicMock()
+        mock_session.get_credentials.return_value = MagicMock()
+        mock_session.region_name = 'us-east-1'
+
+        db = NeptuneDatabase('https://test-endpoint.amazonaws.com:8182', mock_session)
+
+        # Mock response
+        expected_response = {'results': {'bindings': []}}
+        mock_response = MagicMock()
+        mock_response.text = json.dumps(expected_response)
+        mock_requests.return_value = mock_response
+
+        # Execute
+        query = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <http://example/egbook> dc:title  "This is an example title" } WHERE {}'
+        result = db._query_sparql(query)
+
+        # Verify
+        assert result == expected_response

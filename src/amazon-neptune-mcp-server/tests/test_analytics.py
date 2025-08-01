@@ -245,6 +245,7 @@ class TestNeptuneAnalytics:
             NeptuneAnalytics._refresh_schema.return_value = mock_schema
 
             # Act
+            analytics.schema = None
             result = analytics.get_lpg_schema()
 
             # Assert
