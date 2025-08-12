@@ -833,6 +833,8 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
+        mock_client = MagicMock()
+
         # Mock _refresh_lpg_schema and _query_sparql to avoid actual API calls during init
         with (
             patch.object(NeptuneDatabase, '_refresh_lpg_schema'),
@@ -1907,6 +1909,12 @@ class TestNeptuneDatabase:
         mock_response = MagicMock()
         mock_response.text = json.dumps(expected_response)
         mock_requests.return_value = mock_response
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_session_instance.get_credentials.return_value = MagicMock()
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
 
         # Execute
         query = 'SELECT * WHERE { ?s ?p ?o }'
@@ -1929,6 +1937,12 @@ class TestNeptuneDatabase:
         mock_session = MagicMock()
         mock_session.get_credentials.return_value = MagicMock()
         mock_session.region_name = 'us-east-1'
+        mock_session_instance = MagicMock()
+        mock_session_instance.region_name = 'us-east-1'
+        mock_session_instance.get_credentials.return_value = MagicMock()
+        mock_client = MagicMock()
+        mock_session_instance.client.return_value = mock_client
+        mock_session.return_value = mock_session_instance
 
         db = NeptuneDatabase('https://test-endpoint.amazonaws.com:8182', mock_session)
 
