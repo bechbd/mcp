@@ -1916,6 +1916,19 @@ class TestNeptuneDatabase:
         mock_session_instance.client.return_value = mock_client
         mock_session.return_value = mock_session_instance
 
+        # Mock AWS request
+        mock_aws_request_instance = MagicMock()
+        mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
+        mock_sigv4_auth.return_value = mock_aws_request_instance
+
+        # Mock SPARQLWrapper to identify query type
+        with patch(
+            'awslabs.amazon_neptune_mcp_server.graph_store.database.SPARQLWrapper'
+        ) as mock_sparql_wrapper:
+            mock_wrapper_instance = MagicMock()
+            mock_wrapper_instance.queryType = 'SELECT'
+            mock_sparql_wrapper.return_value = mock_wrapper_instance
+
         # Execute
         query = 'SELECT * WHERE { ?s ?p ?o }'
         result = db._query_sparql(query)
@@ -1945,6 +1958,19 @@ class TestNeptuneDatabase:
         mock_session.return_value = mock_session_instance
 
         db = NeptuneDatabase('https://test-endpoint.amazonaws.com:8182', mock_session)
+
+        # Mock AWS request
+        mock_aws_request_instance = MagicMock()
+        mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
+        mock_sigv4_auth.return_value = mock_aws_request_instance
+
+        # Mock SPARQLWrapper to identify query type
+        with patch(
+            'awslabs.amazon_neptune_mcp_server.graph_store.database.SPARQLWrapper'
+        ) as mock_sparql_wrapper:
+            mock_wrapper_instance = MagicMock()
+            mock_wrapper_instance.queryType = 'UPDATE'
+            mock_sparql_wrapper.return_value = mock_wrapper_instance
 
         # Mock response
         expected_response = {'results': {'bindings': []}}
