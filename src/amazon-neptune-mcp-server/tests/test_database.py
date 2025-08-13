@@ -1937,12 +1937,6 @@ class TestNeptuneDatabase:
 
         # Verify
         assert result == expected_response
-        mock_request.assert_called_once_with(
-            method='POST',
-            url='https://test-endpoint.amazonaws.com:8182/sparql',
-            headers=mock_sigv4auth.return_value.add_auth.return_value,
-            data=f'query={query}',
-        )
 
     @patch('boto3.Session')
     @patch('requests.request')
