@@ -1893,7 +1893,9 @@ class TestNeptuneDatabase:
             assert weight_prop.name == 'weight'
             assert set(weight_prop.type) == {'DOUBLE', 'BOOLEAN'}
 
-    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
+    @patch('boto3.Session')
+    @patch('requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
     def test_query_sparql(self, mock_sigv4_auth, mock_requests):
         """Test SPARQL select queries."""
@@ -1942,7 +1944,9 @@ class TestNeptuneDatabase:
             data=f'query={query}',
         )
 
-    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.requests.request')
+    @patch('boto3.Session')
+    @patch('requests.request')
+    @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
     def test_query_sparql_update(self, mock_sigv4_auth, mock_requests):
         """Test SPARQL update queries."""
