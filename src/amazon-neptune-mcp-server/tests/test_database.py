@@ -1897,7 +1897,7 @@ class TestNeptuneDatabase:
     @patch('requests.request')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
-    def test_query_sparql(self, mock_sigv4_auth, mock_requests):
+    def test_query_sparql(self, mock_sigv4auth, mock_aws_request, mock_request, mock_session):
         """Test SPARQL select queries."""
         # Setup
         mock_session = MagicMock()
@@ -1910,7 +1910,7 @@ class TestNeptuneDatabase:
         expected_response = {'results': {'bindings': []}}
         mock_response = MagicMock()
         mock_response.text = json.dumps(expected_response)
-        mock_requests.return_value = mock_response
+        mock_request.return_value = mock_response
         mock_session_instance = MagicMock()
         mock_session_instance.region_name = 'us-east-1'
         mock_session_instance.get_credentials.return_value = MagicMock()
@@ -1921,7 +1921,7 @@ class TestNeptuneDatabase:
         # Mock AWS request
         mock_aws_request_instance = MagicMock()
         mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
-        mock_sigv4_auth.return_value = mock_aws_request_instance
+        mock_aws_request.return_value = mock_aws_request_instance
 
         # Mock SPARQLWrapper to identify query type
         with patch(
@@ -1937,10 +1937,10 @@ class TestNeptuneDatabase:
 
         # Verify
         assert result == expected_response
-        mock_requests.assert_called_once_with(
+        mock_request.assert_called_once_with(
             method='POST',
             url='https://test-endpoint.amazonaws.com:8182/sparql',
-            headers=mock_sigv4_auth.return_value.add_auth.return_value,
+            headers=mock_sigv4auth.return_value.add_auth.return_value,
             data=f'query={query}',
         )
 
@@ -1948,7 +1948,9 @@ class TestNeptuneDatabase:
     @patch('requests.request')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.AWSRequest')
     @patch('awslabs.amazon_neptune_mcp_server.graph_store.database.SigV4Auth')
-    def test_query_sparql_update(self, mock_sigv4_auth, mock_requests):
+    def test_query_sparql_update(
+        self, mock_sigv4auth, mock_aws_request, mock_request, mock_session
+    ):
         """Test SPARQL update queries."""
         # Setup
         mock_session = MagicMock()
@@ -1966,7 +1968,7 @@ class TestNeptuneDatabase:
         # Mock AWS request
         mock_aws_request_instance = MagicMock()
         mock_aws_request_instance.headers = {'Authorization': 'AWS4-HMAC-SHA256...'}
-        mock_sigv4_auth.return_value = mock_aws_request_instance
+        mock_aws_request.return_value = mock_aws_request_instance
 
         # Mock SPARQLWrapper to identify query type
         with patch(
@@ -1980,7 +1982,7 @@ class TestNeptuneDatabase:
         expected_response = {'results': {'bindings': []}}
         mock_response = MagicMock()
         mock_response.text = json.dumps(expected_response)
-        mock_requests.return_value = mock_response
+        mock_request.return_value = mock_response
 
         # Execute
         query = 'PREFIX dc: <http://purl.org/dc/elements/1.1/> INSERT { <http://example/egbook> dc:title  "This is an example title" } WHERE {}'
